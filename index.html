@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+
+<html lang="vi">
+<head>
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+
+<title>Wishlist của Nhím</title>
+
+<style>
+
+*{
+box-sizing:border-box;
+font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto;
+}
+
+body{
+margin:0;
+background:#f3eee7;
+color:#4a4036;
+}
+
+/* HEADER */
+
+.header{
+background:linear-gradient(135deg,#e8dccb,#d6c2a5);
+padding:40px 20px;
+text-align:center;
+border-bottom-left-radius:28px;
+border-bottom-right-radius:28px;
+}
+
+.header h1{
+margin:0;
+font-size:26px;
+}
+
+/* WISHLIST BUTTON */
+
+.wishlist-btn{
+
+position:sticky;
+top:0;
+background:#fff;
+padding:14px;
+text-align:center;
+font-weight:600;
+cursor:pointer;
+border-bottom:1px solid #eee;
+z-index:5;
+
+}
+
+/* LAYOUT */
+
+.container{
+padding:20px;
+max-width:520px;
+margin:auto;
+}
+
+.card{
+background:white;
+padding:18px;
+border-radius:16px;
+box-shadow:0 8px 25px rgba(0,0,0,0.06);
+margin-bottom:20px;
+}
+
+input,select,textarea{
+
+width:100%;
+padding:12px;
+margin-top:6px;
+margin-bottom:14px;
+border-radius:10px;
+border:1px solid #ddd;
+font-size:15px;
+
+}
+
+button{
+
+width:100%;
+padding:14px;
+border:none;
+border-radius:12px;
+background:#cbb79a;
+font-size:16px;
+cursor:pointer;
+
+}
+
+/* IMAGE PREVIEW */
+
+.preview img{
+
+width:90px;
+border-radius:10px;
+margin-bottom:10px;
+
+}
+
+/* POPUP */
+
+.popup{
+
+position:fixed;
+bottom:-100%;
+left:0;
+width:100%;
+height:85%;
+background:white;
+border-top-left-radius:20px;
+border-top-right-radius:20px;
+box-shadow:0 -10px 30px rgba(0,0,0,0.2);
+transition:.35s;
+overflow:auto;
+
+}
+
+.popup.active{
+bottom:0;
+}
+
+.popup-header{
+
+padding:16px;
+font-weight:600;
+border-bottom:1px solid #eee;
+
+}
+
+/* TABS */
+
+.tabs{
+
+display:flex;
+border-bottom:1px solid #eee;
+
+}
+
+.tab{
+
+flex:1;
+padding:12px;
+text-align:center;
+cursor:pointer;
+font-size:14px;
+
+}
+
+.tab.active{
+background:#f5efe6;
+font-weight:600;
+}
+
+/* ITEM */
+
+.item{
+
+padding:16px;
+border-bottom:1px solid #eee;
+display:flex;
+justify-content:space-between;
+
+}
+
+.item img{
+width:60px;
+border-radius:8px;
+margin-top:6px;
+}
+
+.delete{
+
+background:#e7d7c3;
+border:none;
+padding:8px 10px;
+border-radius:8px;
+cursor:pointer;
+font-size:12px;
+height:32px;
+
+}
+
+</style>
+
+</head>
+
+<body>
+
+<div class="header">
+
+<h1>Wishlist của Nhím</h1>
+<div>Mọi điều em muốn, anh sẽ nhớ 🤍</div>
+
+</div>
+
+<div class="wishlist-btn" onclick="togglePopup()">
+
+Danh sách mong muốn ❤️ (<span id="count">0</span>)
+
+</div>
+
+<div class="container">
+
+<div class="card">
+
+<label>Tên món quà</label> <input id="name">
+
+<label>Cụ thể (loại, brand, link...)</label>
+
+<textarea id="detail"></textarea>
+
+<label>Hình ảnh</label> <input type="file" id="image" onchange="previewImage(event)">
+
+<div class="preview" id="preview"></div>
+
+<label>Danh mục</label> <select id="category">
+
+<option>Quà đôi & lãng mạn</option>
+<option>Mỹ phẩm</option>
+<option>Thời trang</option>
+<option>Du lịch</option>
+<option>Khác</option>
+</select>
+
+<label>Giá ước tính</label> <input id="price">
+
+<label>Độ ưu tiên</label> <select id="priority">
+
+<option value="low">🙄 Ước thôi</option>
+<option value="medium">🤭 Thích nha</option>
+<option value="high">🥰 Muốn lắm</option>
+</select>
+
+<button onclick="addGift()">Thêm vào Wishlist</button>
+
+</div>
+
+</div>
+
+<div class="popup" id="popup">
+
+<div class="popup-header">
+
+Wishlist của Nhím
+
+</div>
+
+<div class="tabs">
+
+<div class="tab active" onclick="switchTab('all')">Tất cả</div>
+<div class="tab" onclick="switchTab('🥰')">🥰</div>
+<div class="tab" onclick="switchTab('🤭')">🤭</div>
+<div class="tab" onclick="switchTab('🙄')">🙄</div>
+
+</div>
+
+<div id="list"></div>
+
+</div>
+
+<script>
+
+let gifts=JSON.parse(localStorage.getItem("wishlist")) || []
+
+let currentTab="all"
+
+function render(){
+
+let list=document.getElementById("list")
+
+let count=document.getElementById("count")
+
+count.innerText=gifts.length
+
+list.innerHTML=""
+
+gifts.forEach((g,i)=>{
+
+if(currentTab!=="all" && !g.priority.includes(currentTab)) return
+
+list.innerHTML+=`
+
+<div class="item">
+
+<div>
+
+<b>${g.name}</b><br>
+
+${g.detail || ""}<br>
+
+${g.price ? g.price+" VND":""}
+
+<br>${g.priority}
+
+${g.image ? "<br><img src='"+g.image+"'>" : ""}
+
+</div>
+
+<button class="delete" onclick="removeGift(${i})">
+
+Xóa
+
+</button>
+
+</div>
+
+`
+
+})
+
+}
+
+function previewImage(e){
+
+let reader=new FileReader()
+
+reader.onload=function(event){
+
+document.getElementById("preview").innerHTML="<img src='"+event.target.result+"'>"
+
+}
+
+reader.readAsDataURL(e.target.files[0])
+
+}
+
+function addGift(){
+
+let name=document.getElementById("name").value
+let detail=document.getElementById("detail").value
+let price=document.getElementById("price").value
+let priority=document.getElementById("priority").selectedOptions[0].text
+let file=document.getElementById("image").files[0]
+
+if(!name) return
+
+if(file){
+
+let reader=new FileReader()
+
+reader.onload=function(e){
+
+saveGift(name,detail,price,priority,e.target.result)
+
+}
+
+reader.readAsDataURL(file)
+
+}else{
+
+saveGift(name,detail,price,priority,null)
+
+}
+
+}
+
+function saveGift(name,detail,price,priority,image){
+
+gifts.push({name,detail,price,priority,image})
+
+localStorage.setItem("wishlist",JSON.stringify(gifts))
+
+render()
+
+document.getElementById("name").value=""
+document.getElementById("detail").value=""
+document.getElementById("price").value=""
+document.getElementById("image").value=""
+document.getElementById("preview").innerHTML=""
+
+}
+
+function removeGift(i){
+
+gifts.splice(i,1)
+
+localStorage.setItem("wishlist",JSON.stringify(gifts))
+
+render()
+
+}
+
+function togglePopup(){
+
+document.getElementById("popup").classList.toggle("active")
+
+}
+
+function switchTab(tab){
+
+currentTab=tab
+
+document.querySelectorAll(".tab").forEach(t=>t.classList.remove("active"))
+
+event.target.classList.add("active")
+
+render()
+
+}
+
+render()
+
+</script>
+
+</body>
+</html>
