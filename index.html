@@ -25,17 +25,20 @@ body{
 margin:0;
 background:#f3eee7;
 color:#4a4036;
+padding-top:env(safe-area-inset-top);
 }
 
-/* SAFE AREA FIX (Dynamic Island) */
+/* HEADER */
 
 .header{
-padding-top:calc(40px + env(safe-area-inset-top));
+
 background:linear-gradient(135deg,#e8dccb,#d6c2a5);
-padding-bottom:28px;
+padding:20px 20px 18px;
+padding-top:calc(env(safe-area-inset-top) + 20px);
 text-align:center;
 border-bottom-left-radius:28px;
 border-bottom-right-radius:28px;
+
 }
 
 .header h1{
@@ -43,12 +46,10 @@ margin:0;
 font-size:26px;
 }
 
-/* BUTTON OPEN LIST */
+/* OPEN LIST */
 
 .wishlist-btn{
 
-position:sticky;
-top:0;
 background:#fff;
 padding:14px;
 text-align:center;
@@ -71,7 +72,6 @@ background:white;
 padding:18px;
 border-radius:16px;
 box-shadow:0 8px 25px rgba(0,0,0,0.06);
-margin-bottom:20px;
 }
 
 input,select,textarea{
@@ -116,10 +116,10 @@ left:0;
 width:100%;
 height:90%;
 background:white;
-border-top-left-radius:22px;
-border-top-right-radius:22px;
+border-top-left-radius:24px;
+border-top-right-radius:24px;
 box-shadow:0 -10px 30px rgba(0,0,0,0.2);
-transition:0.35s cubic-bezier(.22,1,.36,1);
+transition:.35s cubic-bezier(.22,1,.36,1);
 overflow:auto;
 
 }
@@ -128,17 +128,33 @@ overflow:auto;
 bottom:0;
 }
 
-/* POPUP HEADER */
+/* DRAG HANDLE */
+
+.popup::before{
+
+content:"";
+width:36px;
+height:5px;
+background:#ddd;
+border-radius:10px;
+position:absolute;
+top:8px;
+left:50%;
+transform:translateX(-50%);
+
+}
+
+/* HEADER POPUP */
 
 .popup-header{
 
 display:flex;
 justify-content:space-between;
 align-items:center;
-padding:10px 16px;
-border-bottom:1px solid #eee;
-font-size:15px;
+padding:12px 16px;
+font-size:16px;
 font-weight:600;
+border-bottom:1px solid #eee;
 
 }
 
@@ -148,8 +164,7 @@ background:none;
 border:none;
 font-size:18px;
 cursor:pointer;
-color:#888;
-padding:4px 6px;
+color:#999;
 
 }
 
@@ -178,18 +193,19 @@ font-weight:600;
 /* LIST */
 
 .list{
-padding-bottom:30px;
+padding-bottom:40px;
 }
 
 /* ITEM */
 
 .item{
 
-padding:14px 16px;
+padding:12px 16px;
 border-bottom:1px solid #eee;
 display:flex;
-justify-content:space-between;
-align-items:flex-start;
+gap:12px;
+align-items:center;
+position:relative;
 animation:itemIn .35s ease;
 
 }
@@ -198,7 +214,7 @@ animation:itemIn .35s ease;
 
 from{
 opacity:0;
-transform:translateY(10px);
+transform:translateY(8px);
 }
 
 to{
@@ -217,21 +233,31 @@ transition:0.35s;
 }
 
 .item img{
-width:56px;
+
+width:52px;
+height:52px;
+object-fit:cover;
 border-radius:8px;
-margin-top:6px;
+
+}
+
+.item-content{
+flex:1;
+font-size:14px;
 }
 
 /* DELETE */
 
 .delete{
 
+position:absolute;
+right:12px;
+top:12px;
 background:none;
 border:none;
 font-size:16px;
+color:#aaa;
 cursor:pointer;
-color:#999;
-margin-left:8px;
 
 }
 
@@ -301,7 +327,9 @@ Danh sách mong muốn ❤️ (<span id="count">0</span>)
 
 <div class="preview" id="preview"></div>
 
-<label>Danh mục</label> <select id="category">
+<label>Danh mục</label>
+
+<select id="category">
 
 <option>Couple</option>
 <option>Mỹ phẩm</option>
@@ -384,15 +412,13 @@ item.className="item"
 
 item.innerHTML=`
 
-<div>
+<img src="${g.image || ''}">
+
+<div class="item-content">
 
 <b>${g.name}</b><br>
-
-${g.detail || ""}<br>
-
-${g.priority}
-
-${g.image ? "<br><img src='"+g.image+"'>" : ""}
+${g.detail || ""}
+<br>${g.priority}
 
 </div>
 
@@ -491,7 +517,9 @@ item.classList.add("removing")
 setTimeout(()=>{
 
 gifts.splice(i,1)
+
 localStorage.setItem("wishlist",JSON.stringify(gifts))
+
 render()
 
 },350)
