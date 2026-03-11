@@ -163,6 +163,16 @@ padding:14px 20px;
 border-bottom:1px solid #eee;
 position:relative;
 cursor:pointer;
+transition:.3s;
+}
+
+.item.break{
+animation:break .35s forwards;
+}
+
+@keyframes break{
+0%{transform:scale(1);opacity:1;}
+100%{transform:scale(.7) rotate(8deg);opacity:0;}
 }
 
 .item img{
@@ -208,6 +218,21 @@ cursor:pointer;
 
 .item.active .delete{
 display:block;
+}
+
+/* HEART */
+
+.heart{
+position:fixed;
+font-size:20px;
+pointer-events:none;
+animation:heartFly 1s ease forwards;
+}
+
+@keyframes heartFly{
+0%{transform:translateY(0) scale(.4);opacity:0;}
+20%{opacity:1;}
+100%{transform:translateY(-120px) scale(1.6);opacity:0;}
 }
 
 /* UNDO BAR */
@@ -259,7 +284,7 @@ Danh sách mong muốn ❤️ (<span id="count">0</span>)
 
 <label>Tên món quà</label> <input id="name">
 
-<label>Cụ thể (loại, brand, link...)</label>
+<label>Cụ thể</label>
 
 <textarea id="detail"></textarea>
 
@@ -267,29 +292,17 @@ Danh sách mong muốn ❤️ (<span id="count">0</span>)
 
 <div class="preview" id="preview"></div>
 
-<label>Danh mục</label>
-
-<select id="category">
-
-<option>Couple</option>
-<option>Mỹ phẩm</option>
-<option>Thời trang</option>
-<option>Du lịch</option>
-<option>Khác</option>
-
-</select>
-
 <label>Độ ưu tiên</label>
 
 <select id="priority">
 
-<option value="low">🙄 Ước thôi</option>
-<option value="medium">🤭 Thích nha</option>
-<option value="high">🥰 Muốn lắm</option>
+<option>🙄 Ước thôi</option>
+<option>🤭 Thích nha</option>
+<option>🥰 Muốn lắm</option>
 
 </select>
 
-<button onclick="addGift()">Thêm vào Wishlist</button>
+<button onclick="addGift(event)">Thêm vào Wishlist</button>
 
 </div>
 
@@ -328,7 +341,31 @@ let lastDeleted=null
 let lastIndex=null
 
 const list=document.getElementById("list")
+const popup=document.getElementById("popup")
 const undoBar=document.getElementById("undoBar")
+
+/* HEART EFFECT */
+
+function heartEffect(x,y){
+
+for(let i=0;i<6;i++){
+
+let h=document.createElement("div")
+h.className="heart"
+h.innerHTML="❤️"
+
+h.style.left=(x+Math.random()*40-20)+"px"
+h.style.top=(y+Math.random()*10)+"px"
+
+document.body.appendChild(h)
+
+setTimeout(()=>h.remove(),1000)
+
+}
+
+}
+
+/* CREATE ITEM */
 
 function createItem(g,i){
 
@@ -361,13 +398,15 @@ item.classList.add("active")
 item.querySelector(".delete").onclick=(e)=>{
 
 e.stopPropagation()
-removeGift(i)
+removeGift(i,item)
 
 }
 
 return item
 
 }
+
+/* RENDER */
 
 function render(){
 
@@ -385,25 +424,17 @@ list.appendChild(createItem(g,i))
 
 }
 
-function previewImage(e){
+/* ADD */
 
-let reader=new FileReader()
+function addGift(e){
 
-reader.onload=function(ev){
+let rect=e.target.getBoundingClientRect()
 
-document.getElementById("preview").innerHTML="<img src='"+ev.target.result+"'>"
-
-}
-
-reader.readAsDataURL(e.target.files[0])
-
-}
-
-function addGift(){
+heartEffect(rect.left+rect.width/2,rect.top)
 
 let name=document.getElementById("name").value
 let detail=document.getElementById("detail").value
-let priority=document.getElementById("priority").selectedOptions[0].text
+let priority=document.getElementById("priority").value
 let file=document.getElementById("image").files[0]
 
 if(!name) return
@@ -428,6 +459,8 @@ saveGift(name,detail,priority,null)
 
 }
 
+/* SAVE */
+
 function saveGift(name,detail,priority,image){
 
 gifts.push({name,detail,priority,image})
@@ -438,10 +471,16 @@ render()
 
 }
 
-function removeGift(i){
+/* DELETE */
+
+function removeGift(i,item){
 
 lastDeleted=gifts[i]
 lastIndex=i
+
+item.classList.add("break")
+
+setTimeout(()=>{
 
 gifts.splice(i,1)
 
@@ -454,6 +493,8 @@ undoBar.style.display="flex"
 setTimeout(()=>{
 undoBar.style.display="none"
 },4000)
+
+},300)
 
 }
 
@@ -473,11 +514,43 @@ undoBar.style.display="none"
 
 }
 
+/* POPUP TOGGLE */
+
 function togglePopup(){
 
-document.getElementById("popup").classList.toggle("active")
+popup.classList.toggle("active")
 
 }
+
+/* POPUP DRAG DOWN */
+
+let startY=0
+
+popup.addEventListener("touchstart",e=>{
+startY=e.touches[0].clientY
+})
+
+popup.addEventListener("touchmove",e=>{
+
+let move=e.touches[0].clientY-startY
+
+if(move>0){
+popup.style.transform=`translateY(${move}px)`
+}
+
+})
+
+popup.addEventListener("touchend",e=>{
+
+let move=e.changedTouches[0].clientY-startY
+
+if(move>120){
+togglePopup()
+}
+
+popup.style.transform=""
+
+})
 
 function switchTab(tab,e){
 
