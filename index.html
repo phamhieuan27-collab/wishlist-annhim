@@ -123,21 +123,9 @@ bottom:0;
 .popup-header{
 display:flex;
 justify-content:center;
-align-items:center;
-position:relative;
 padding:14px;
 font-weight:600;
 border-bottom:1px solid #eee;
-}
-
-.popup-header button{
-position:absolute;
-right:16px;
-background:none;
-border:none;
-font-size:14px;
-color:#888;
-cursor:pointer;
 }
 
 /* TABS */
@@ -171,13 +159,11 @@ padding-bottom:40px;
 display:flex;
 align-items:center;
 gap:12px;
-padding:14px 16px;
+padding:14px 20px;
 border-bottom:1px solid #eee;
 position:relative;
 cursor:pointer;
 }
-
-/* IMAGE */
 
 .item img{
 width:56px;
@@ -187,11 +173,8 @@ border-radius:10px;
 flex-shrink:0;
 }
 
-/* CONTENT */
-
 .item-content{
 flex:1;
-min-width:0;
 }
 
 .item-name{
@@ -208,11 +191,11 @@ font-size:14px;
 margin-top:2px;
 }
 
-/* DELETE BUTTON */
+/* DELETE */
 
 .delete{
 position:absolute;
-right:16px;
+right:6px;
 top:50%;
 transform:translateY(-50%);
 background:none;
@@ -223,25 +206,32 @@ display:none;
 cursor:pointer;
 }
 
-/* SHOW DELETE WHEN ACTIVE */
-
 .item.active .delete{
 display:block;
 }
 
-/* HEART EFFECT */
+/* UNDO BAR */
 
-.heart{
+.undo{
 position:fixed;
-font-size:20px;
-pointer-events:none;
-animation:heartFly 1.2s ease forwards;
+bottom:30px;
+left:50%;
+transform:translateX(-50%);
+background:#333;
+color:white;
+padding:12px 16px;
+border-radius:10px;
+display:none;
+gap:10px;
+align-items:center;
 }
 
-@keyframes heartFly{
-0%{transform:translateY(0) scale(.5);opacity:0;}
-20%{opacity:1;}
-100%{transform:translateY(-150px) scale(1.8);opacity:0;}
+.undo button{
+background:none;
+border:none;
+color:#ffd479;
+font-weight:600;
+cursor:pointer;
 }
 
 </style>
@@ -308,11 +298,7 @@ Danh sách mong muốn ❤️ (<span id="count">0</span>)
 <div class="popup" id="popup">
 
 <div class="popup-header">
-
 Wishlist
-
-<button onclick="togglePopup()">Đóng</button>
-
 </div>
 
 <div class="tabs">
@@ -328,12 +314,21 @@ Wishlist
 
 </div>
 
+<div class="undo" id="undoBar">
+Đã xoá
+<button onclick="undoDelete()">Hoàn tác</button>
+</div>
+
 <script>
 
 let gifts=JSON.parse(localStorage.getItem("wishlist")) || []
 let currentTab="all"
 
+let lastDeleted=null
+let lastIndex=null
+
 const list=document.getElementById("list")
+const undoBar=document.getElementById("undoBar")
 
 function createItem(g,i){
 
@@ -347,9 +342,7 @@ item.innerHTML=`
 <div class="item-content">
 
 <div class="item-name">${g.name}</div>
-
 <div class="item-detail">${g.detail || ""}</div>
-
 <div class="item-priority">${g.priority}</div>
 
 </div>
@@ -361,7 +354,6 @@ item.innerHTML=`
 item.onclick=()=>{
 
 document.querySelectorAll(".item").forEach(x=>x.classList.remove("active"))
-
 item.classList.add("active")
 
 }
@@ -369,7 +361,6 @@ item.classList.add("active")
 item.querySelector(".delete").onclick=(e)=>{
 
 e.stopPropagation()
-
 removeGift(i)
 
 }
@@ -449,11 +440,36 @@ render()
 
 function removeGift(i){
 
+lastDeleted=gifts[i]
+lastIndex=i
+
 gifts.splice(i,1)
 
 localStorage.setItem("wishlist",JSON.stringify(gifts))
 
 render()
+
+undoBar.style.display="flex"
+
+setTimeout(()=>{
+undoBar.style.display="none"
+},4000)
+
+}
+
+function undoDelete(){
+
+if(lastDeleted!==null){
+
+gifts.splice(lastIndex,0,lastDeleted)
+
+localStorage.setItem("wishlist",JSON.stringify(gifts))
+
+render()
+
+undoBar.style.display="none"
+
+}
 
 }
 
