@@ -9,7 +9,6 @@
 <title>Wishlist của Nhím</title>
 
 <link rel="apple-touch-icon" href="icon.png">
-<meta name="apple-mobile-web-app-capable" content="yes">
 
 <style>
 
@@ -24,11 +23,6 @@ margin:0;
 background:#f3eee7;
 color:#4a4036;
 padding-top:env(safe-area-inset-top);
-transition:filter .3s;
-}
-
-body.blur{
-filter:blur(6px);
 }
 
 /* HEADER */
@@ -93,6 +87,23 @@ font-size:16px;
 cursor:pointer;
 }
 
+/* OVERLAY */
+
+.overlay{
+position:fixed;
+inset:0;
+background:rgba(0,0,0,0.2);
+backdrop-filter:blur(6px);
+opacity:0;
+pointer-events:none;
+transition:.3s;
+}
+
+.overlay.active{
+opacity:1;
+pointer-events:auto;
+}
+
 /* POPUP */
 
 .popup{
@@ -107,6 +118,7 @@ border-top-right-radius:24px;
 box-shadow:0 -10px 30px rgba(0,0,0,0.2);
 transform:translateY(100%);
 transition:transform .35s cubic-bezier(.22,1,.36,1);
+will-change:transform;
 }
 
 .popup.active{
@@ -314,6 +326,8 @@ Danh sách mong muốn ❤️ (<span id="count">0</span>)
 
 </div>
 
+<div class="overlay" id="overlay"></div>
+
 <div class="popup" id="popup">
 
 <div class="drag"></div>
@@ -350,6 +364,7 @@ let lastIndex=null
 
 const list=document.getElementById("list")
 const popup=document.getElementById("popup")
+const overlay=document.getElementById("overlay")
 const undoBar=document.getElementById("undoBar")
 
 /* HEART */
@@ -449,17 +464,13 @@ if(file){
 let reader=new FileReader()
 
 reader.onload=function(ev){
-
 saveGift(name,detail,priority,ev.target.result)
-
 }
 
 reader.readAsDataURL(file)
 
 }else{
-
 saveGift(name,detail,priority,null)
-
 }
 
 }
@@ -520,8 +531,7 @@ undoBar.style.display="none"
 function togglePopup(){
 
 popup.classList.toggle("active")
-
-document.body.classList.toggle("blur")
+overlay.classList.toggle("active")
 
 }
 
@@ -554,6 +564,8 @@ togglePopup()
 popup.style.transform=""
 
 })
+
+overlay.onclick=togglePopup
 
 function switchTab(tab,e){
 
