@@ -4,17 +4,21 @@
 <head>
 
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 
 <title>Wishlist của Nhím</title>
-  <link rel="apple-touch-icon" href="icon.png">
-  </head>
+
+<link rel="apple-touch-icon" href="icon.png">
+<meta name="apple-mobile-web-app-title" content="Wishlist">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 
 <style>
 
 *{
 box-sizing:border-box;
 font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto;
+-webkit-tap-highlight-color:transparent;
 }
 
 body{
@@ -27,7 +31,7 @@ color:#4a4036;
 
 .header{
 background:linear-gradient(135deg,#e8dccb,#d6c2a5);
-padding:40px 20px;
+padding:42px 20px 32px;
 text-align:center;
 border-bottom-left-radius:28px;
 border-bottom-right-radius:28px;
@@ -38,7 +42,7 @@ margin:0;
 font-size:26px;
 }
 
-/* WISHLIST BUTTON */
+/* OPEN LIST */
 
 .wishlist-btn{
 
@@ -50,11 +54,10 @@ text-align:center;
 font-weight:600;
 cursor:pointer;
 border-bottom:1px solid #eee;
-z-index:5;
 
 }
 
-/* LAYOUT */
+/* FORM */
 
 .container{
 padding:20px;
@@ -94,14 +97,12 @@ cursor:pointer;
 
 }
 
-/* IMAGE PREVIEW */
+/* IMAGE */
 
 .preview img{
-
 width:90px;
 border-radius:10px;
 margin-bottom:10px;
-
 }
 
 /* POPUP */
@@ -112,12 +113,12 @@ position:fixed;
 bottom:-100%;
 left:0;
 width:100%;
-height:85%;
+height:90%;
 background:white;
-border-top-left-radius:20px;
-border-top-right-radius:20px;
+border-top-left-radius:22px;
+border-top-right-radius:22px;
 box-shadow:0 -10px 30px rgba(0,0,0,0.2);
-transition:.35s;
+transition:0.35s cubic-bezier(.22,1,.36,1);
 overflow:auto;
 
 }
@@ -126,21 +127,34 @@ overflow:auto;
 bottom:0;
 }
 
+/* HEADER POPUP */
+
 .popup-header{
 
+display:flex;
+justify-content:space-between;
+align-items:center;
 padding:16px;
-font-weight:600;
 border-bottom:1px solid #eee;
+font-weight:600;
+
+}
+
+.close{
+
+background:none;
+border:none;
+font-size:14px;
+cursor:pointer;
+color:#888;
 
 }
 
 /* TABS */
 
 .tabs{
-
 display:flex;
 border-bottom:1px solid #eee;
-
 }
 
 .tab{
@@ -150,12 +164,19 @@ padding:12px;
 text-align:center;
 cursor:pointer;
 font-size:14px;
+transition:0.2s;
 
 }
 
 .tab.active{
 background:#f5efe6;
 font-weight:600;
+}
+
+/* LIST */
+
+.list{
+padding-bottom:40px;
 }
 
 /* ITEM */
@@ -166,6 +187,30 @@ padding:16px;
 border-bottom:1px solid #eee;
 display:flex;
 justify-content:space-between;
+align-items:flex-start;
+animation:itemIn .35s ease;
+
+}
+
+@keyframes itemIn{
+
+from{
+opacity:0;
+transform:translateY(10px);
+}
+
+to{
+opacity:1;
+transform:translateY(0);
+}
+
+}
+
+.item.removing{
+
+transform:translateX(120%);
+opacity:0;
+transition:0.35s;
 
 }
 
@@ -175,15 +220,48 @@ border-radius:8px;
 margin-top:6px;
 }
 
+/* DELETE */
+
 .delete{
 
-background:#e7d7c3;
+background:none;
 border:none;
-padding:8px 10px;
-border-radius:8px;
+font-size:18px;
 cursor:pointer;
-font-size:12px;
-height:32px;
+color:#999;
+
+}
+
+.delete:hover{
+color:#d33;
+}
+
+/* HEART EFFECT */
+
+.heart{
+
+position:fixed;
+font-size:20px;
+pointer-events:none;
+animation:heartFly 1.2s ease forwards;
+
+}
+
+@keyframes heartFly{
+
+0%{
+transform:translateY(0) scale(.5);
+opacity:0;
+}
+
+20%{
+opacity:1;
+}
+
+100%{
+transform:translateY(-150px) scale(1.8);
+opacity:0;
+}
 
 }
 
@@ -222,23 +300,25 @@ Danh sách mong muốn ❤️ (<span id="count">0</span>)
 
 <label>Danh mục</label> <select id="category">
 
-<option>Quà đôi & lãng mạn</option>
+<option>Couple</option>
 <option>Mỹ phẩm</option>
 <option>Thời trang</option>
 <option>Du lịch</option>
 <option>Khác</option>
+
 </select>
 
-<label>Giá ước tính</label> <input id="price">
+<label>Độ ưu tiên</label>
 
-<label>Độ ưu tiên</label> <select id="priority">
+<select id="priority">
 
 <option value="low">🙄 Ước thôi</option>
 <option value="medium">🤭 Thích nha</option>
 <option value="high">🥰 Muốn lắm</option>
+
 </select>
 
-<button onclick="addGift()">Thêm vào Wishlist</button>
+<button onclick="addGift(event)">Thêm vào Wishlist</button>
 
 </div>
 
@@ -250,18 +330,20 @@ Danh sách mong muốn ❤️ (<span id="count">0</span>)
 
 Wishlist của Nhím
 
+<button class="close" onclick="togglePopup()">Đóng</button>
+
 </div>
 
 <div class="tabs">
 
-<div class="tab active" onclick="switchTab('all')">Tất cả</div>
-<div class="tab" onclick="switchTab('🥰')">🥰</div>
-<div class="tab" onclick="switchTab('🤭')">🤭</div>
-<div class="tab" onclick="switchTab('🙄')">🙄</div>
+<div class="tab active" onclick="switchTab('all',event)">Tất cả</div>
+<div class="tab" onclick="switchTab('🥰',event)">🥰</div>
+<div class="tab" onclick="switchTab('🤭',event)">🤭</div>
+<div class="tab" onclick="switchTab('🙄',event)">🙄</div>
 
 </div>
 
-<div id="list"></div>
+<div id="list" class="list"></div>
 
 </div>
 
@@ -271,23 +353,39 @@ let gifts=JSON.parse(localStorage.getItem("wishlist")) || []
 
 let currentTab="all"
 
-function render(){
+const list=document.getElementById("list")
 
-let list=document.getElementById("list")
+/* HEART EFFECT */
 
-let count=document.getElementById("count")
+function heartEffect(x,y){
 
-count.innerText=gifts.length
+for(let i=0;i<6;i++){
 
-list.innerHTML=""
+let h=document.createElement("div")
 
-gifts.forEach((g,i)=>{
+h.className="heart"
+h.innerHTML="❤️"
 
-if(currentTab!=="all" && !g.priority.includes(currentTab)) return
+h.style.left=(x + Math.random()*40-20)+"px"
+h.style.top=(y + Math.random()*10)+"px"
 
-list.innerHTML+=`
+document.body.appendChild(h)
 
-<div class="item">
+setTimeout(()=>h.remove(),1200)
+
+}
+
+}
+
+/* CREATE ITEM NODE */
+
+function createItem(g,i){
+
+let item=document.createElement("div")
+
+item.className="item"
+
+item.innerHTML=`
 
 <div>
 
@@ -295,35 +393,49 @@ list.innerHTML+=`
 
 ${g.detail || ""}<br>
 
-${g.price ? g.price+" VND":""}
-
-<br>${g.priority}
+${g.priority}
 
 ${g.image ? "<br><img src='"+g.image+"'>" : ""}
 
 </div>
 
-<button class="delete" onclick="removeGift(${i})">
-
-Xóa
-
-</button>
-
-</div>
+<button class="delete">✕</button>
 
 `
+
+item.querySelector(".delete").onclick=()=>removeGift(i,item)
+
+return item
+
+}
+
+/* RENDER SMART */
+
+function render(){
+
+list.innerHTML=""
+
+document.getElementById("count").innerText=gifts.length
+
+gifts.forEach((g,i)=>{
+
+if(currentTab!=="all" && !g.priority.includes(currentTab)) return
+
+list.appendChild(createItem(g,i))
 
 })
 
 }
 
+/* IMAGE */
+
 function previewImage(e){
 
 let reader=new FileReader()
 
-reader.onload=function(event){
+reader.onload=function(ev){
 
-document.getElementById("preview").innerHTML="<img src='"+event.target.result+"'>"
+document.getElementById("preview").innerHTML="<img src='"+ev.target.result+"'>"
 
 }
 
@@ -331,11 +443,16 @@ reader.readAsDataURL(e.target.files[0])
 
 }
 
-function addGift(){
+/* ADD */
+
+function addGift(e){
+
+let rect=e.target.getBoundingClientRect()
+
+heartEffect(rect.left+rect.width/2,rect.top)
 
 let name=document.getElementById("name").value
 let detail=document.getElementById("detail").value
-let price=document.getElementById("price").value
 let priority=document.getElementById("priority").selectedOptions[0].text
 let file=document.getElementById("image").files[0]
 
@@ -345,9 +462,9 @@ if(file){
 
 let reader=new FileReader()
 
-reader.onload=function(e){
+reader.onload=function(ev){
 
-saveGift(name,detail,price,priority,e.target.result)
+saveGift(name,detail,priority,ev.target.result)
 
 }
 
@@ -355,15 +472,17 @@ reader.readAsDataURL(file)
 
 }else{
 
-saveGift(name,detail,price,priority,null)
+saveGift(name,detail,priority,null)
 
 }
 
 }
 
-function saveGift(name,detail,price,priority,image){
+function saveGift(name,detail,priority,image){
 
-gifts.push({name,detail,price,priority,image})
+let gift={name,detail,priority,image}
+
+gifts.push(gift)
 
 localStorage.setItem("wishlist",JSON.stringify(gifts))
 
@@ -371,13 +490,18 @@ render()
 
 document.getElementById("name").value=""
 document.getElementById("detail").value=""
-document.getElementById("price").value=""
 document.getElementById("image").value=""
 document.getElementById("preview").innerHTML=""
 
 }
 
-function removeGift(i){
+/* REMOVE */
+
+function removeGift(i,item){
+
+item.classList.add("removing")
+
+setTimeout(()=>{
 
 gifts.splice(i,1)
 
@@ -385,7 +509,11 @@ localStorage.setItem("wishlist",JSON.stringify(gifts))
 
 render()
 
+},350)
+
 }
+
+/* POPUP */
 
 function togglePopup(){
 
@@ -393,13 +521,15 @@ document.getElementById("popup").classList.toggle("active")
 
 }
 
-function switchTab(tab){
+/* TAB */
+
+function switchTab(tab,e){
 
 currentTab=tab
 
 document.querySelectorAll(".tab").forEach(t=>t.classList.remove("active"))
 
-event.target.classList.add("active")
+e.target.classList.add("active")
 
 render()
 
@@ -411,4 +541,3 @@ render()
 
 </body>
 </html>
-
