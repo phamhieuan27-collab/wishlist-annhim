@@ -31,14 +31,12 @@ padding-top:env(safe-area-inset-top);
 /* HEADER */
 
 .header{
-
 background:linear-gradient(135deg,#e8dccb,#d6c2a5);
-padding:20px 20px 18px;
+padding:20px;
 padding-top:calc(env(safe-area-inset-top) + 20px);
 text-align:center;
 border-bottom-left-radius:28px;
 border-bottom-right-radius:28px;
-
 }
 
 .header h1{
@@ -46,17 +44,15 @@ margin:0;
 font-size:26px;
 }
 
-/* OPEN LIST */
+/* BUTTON */
 
 .wishlist-btn{
-
 background:#fff;
 padding:14px;
 text-align:center;
 font-weight:600;
-cursor:pointer;
 border-bottom:1px solid #eee;
-
+cursor:pointer;
 }
 
 /* FORM */
@@ -75,7 +71,6 @@ box-shadow:0 8px 25px rgba(0,0,0,0.06);
 }
 
 input,select,textarea{
-
 width:100%;
 padding:12px;
 margin-top:6px;
@@ -83,11 +78,9 @@ margin-bottom:14px;
 border-radius:10px;
 border:1px solid #ddd;
 font-size:15px;
-
 }
 
 button{
-
 width:100%;
 padding:14px;
 border:none;
@@ -95,7 +88,6 @@ border-radius:12px;
 background:#cbb79a;
 font-size:16px;
 cursor:pointer;
-
 }
 
 /* IMAGE */
@@ -109,7 +101,6 @@ margin-bottom:10px;
 /* POPUP */
 
 .popup{
-
 position:fixed;
 bottom:-100%;
 left:0;
@@ -121,7 +112,6 @@ border-top-right-radius:24px;
 box-shadow:0 -10px 30px rgba(0,0,0,0.2);
 transition:.35s cubic-bezier(.22,1,.36,1);
 overflow:auto;
-
 }
 
 .popup.active{
@@ -131,7 +121,6 @@ bottom:0;
 /* DRAG HANDLE */
 
 .popup::before{
-
 content:"";
 width:36px;
 height:5px;
@@ -141,31 +130,25 @@ position:absolute;
 top:8px;
 left:50%;
 transform:translateX(-50%);
-
 }
 
 /* HEADER POPUP */
 
 .popup-header{
-
 display:flex;
 justify-content:space-between;
 align-items:center;
-padding:12px 16px;
-font-size:16px;
+padding:14px 16px;
 font-weight:600;
 border-bottom:1px solid #eee;
-
 }
 
 .close{
-
 background:none;
 border:none;
 font-size:18px;
 cursor:pointer;
 color:#999;
-
 }
 
 /* TABS */
@@ -176,13 +159,10 @@ border-bottom:1px solid #eee;
 }
 
 .tab{
-
 flex:1;
 padding:10px;
 text-align:center;
 cursor:pointer;
-font-size:14px;
-
 }
 
 .tab.active{
@@ -199,99 +179,55 @@ padding-bottom:40px;
 /* ITEM */
 
 .item{
-
-padding:12px 16px;
+padding:14px 16px;
 border-bottom:1px solid #eee;
 display:flex;
-gap:12px;
 align-items:center;
+gap:12px;
 position:relative;
-animation:itemIn .35s ease;
-
-}
-
-@keyframes itemIn{
-
-from{
-opacity:0;
-transform:translateY(8px);
-}
-
-to{
-opacity:1;
-transform:translateY(0);
-}
-
-}
-
-.item.removing{
-
-transform:translateX(120%);
-opacity:0;
-transition:0.35s;
-
+transition:0.3s;
 }
 
 .item img{
-
 width:52px;
 height:52px;
 object-fit:cover;
 border-radius:8px;
-
+flex-shrink:0;
 }
 
 .item-content{
 flex:1;
 font-size:14px;
+line-height:1.3;
 }
 
-/* DELETE */
+/* DELETE BUTTON */
 
 .delete{
-
 position:absolute;
-right:12px;
-top:12px;
+right:16px;
+top:50%;
+transform:translateY(-50%);
 background:none;
 border:none;
 font-size:16px;
-color:#aaa;
-cursor:pointer;
-
-}
-
-.delete:hover{
-color:#d33;
+color:#bbb;
 }
 
 /* HEART EFFECT */
 
 .heart{
-
 position:fixed;
 font-size:20px;
 pointer-events:none;
 animation:heartFly 1.2s ease forwards;
-
 }
 
 @keyframes heartFly{
-
-0%{
-transform:translateY(0) scale(.5);
-opacity:0;
-}
-
-20%{
-opacity:1;
-}
-
-100%{
-transform:translateY(-150px) scale(1.8);
-opacity:0;
-}
-
+0%{transform:translateY(0) scale(.5);opacity:0;}
+20%{opacity:1;}
+100%{transform:translateY(-150px) scale(1.8);opacity:0;}
 }
 
 </style>
@@ -382,14 +318,16 @@ Wishlist
 
 let gifts=JSON.parse(localStorage.getItem("wishlist")) || []
 let currentTab="all"
+
 const list=document.getElementById("list")
+
+/* HEART EFFECT */
 
 function heartEffect(x,y){
 
 for(let i=0;i<6;i++){
 
 let h=document.createElement("div")
-
 h.className="heart"
 h.innerHTML="❤️"
 
@@ -404,10 +342,11 @@ setTimeout(()=>h.remove(),1200)
 
 }
 
+/* CREATE ITEM */
+
 function createItem(g,i){
 
 let item=document.createElement("div")
-
 item.className="item"
 
 item.innerHTML=`
@@ -416,9 +355,9 @@ item.innerHTML=`
 
 <div class="item-content">
 
-<b>${g.name}</b><br>
-${g.detail || ""}
-<br>${g.priority}
+<div><b>${g.name}</b></div>
+<div>${g.detail || ""}</div>
+<div>${g.priority}</div>
 
 </div>
 
@@ -426,11 +365,49 @@ ${g.detail || ""}
 
 `
 
+/* swipe delete */
+
+let startX=0
+
+item.addEventListener("touchstart",(e)=>{
+startX=e.touches[0].clientX
+})
+
+item.addEventListener("touchmove",(e)=>{
+
+let move=e.touches[0].clientX-startX
+
+if(move<0){
+
+item.style.transform="translateX("+move+"px)"
+
+}
+
+})
+
+item.addEventListener("touchend",(e)=>{
+
+let move=e.changedTouches[0].clientX-startX
+
+if(move<-80){
+
+removeGift(i,item)
+
+}else{
+
+item.style.transform=""
+
+}
+
+})
+
 item.querySelector(".delete").onclick=()=>removeGift(i,item)
 
 return item
 
 }
+
+/* RENDER */
 
 function render(){
 
@@ -448,6 +425,8 @@ list.appendChild(createItem(g,i))
 
 }
 
+/* IMAGE PREVIEW */
+
 function previewImage(e){
 
 let reader=new FileReader()
@@ -461,6 +440,8 @@ document.getElementById("preview").innerHTML="<img src='"+ev.target.result+"'>"
 reader.readAsDataURL(e.target.files[0])
 
 }
+
+/* ADD */
 
 function addGift(e){
 
@@ -510,9 +491,12 @@ document.getElementById("preview").innerHTML=""
 
 }
 
+/* REMOVE */
+
 function removeGift(i,item){
 
-item.classList.add("removing")
+item.style.transform="translateX(-100%)"
+item.style.opacity="0"
 
 setTimeout(()=>{
 
@@ -522,15 +506,19 @@ localStorage.setItem("wishlist",JSON.stringify(gifts))
 
 render()
 
-},350)
+},300)
 
 }
+
+/* POPUP */
 
 function togglePopup(){
 
 document.getElementById("popup").classList.toggle("active")
 
 }
+
+/* TAB */
 
 function switchTab(tab,e){
 
