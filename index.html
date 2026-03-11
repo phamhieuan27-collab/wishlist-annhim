@@ -111,7 +111,7 @@ border-top-left-radius:24px;
 border-top-right-radius:24px;
 box-shadow:0 -10px 30px rgba(0,0,0,0.2);
 transition:.35s cubic-bezier(.22,1,.36,1);
-overflow:auto;
+overflow:hidden;
 }
 
 .popup.active{
@@ -132,30 +132,14 @@ left:50%;
 transform:translateX(-50%);
 }
 
-/* POPUP HEADER */
+/* HEADER POPUP */
 
 .popup-header{
 display:flex;
-align-items:center;
 justify-content:center;
-position:relative;
 padding:14px;
-border-bottom:1px solid #eee;
 font-weight:600;
-}
-
-.popup-title{
-text-align:center;
-}
-
-.close{
-position:absolute;
-right:16px;
-background:none;
-border:none;
-font-size:15px;
-cursor:pointer;
-color:#999;
+border-bottom:1px solid #eee;
 }
 
 /* TABS */
@@ -180,19 +164,46 @@ font-weight:600;
 /* LIST */
 
 .list{
-padding-bottom:40px;
+overflow:auto;
+height:100%;
+}
+
+/* ITEM WRAPPER */
+
+.swipe-container{
+position:relative;
+overflow:hidden;
+}
+
+/* DELETE BUTTON */
+
+.delete-btn{
+position:absolute;
+right:0;
+top:0;
+bottom:0;
+width:80px;
+background:#ff3b30;
+color:white;
+display:flex;
+align-items:center;
+justify-content:center;
+font-weight:600;
 }
 
 /* ITEM */
 
 .item{
+background:white;
 display:flex;
 align-items:center;
 gap:12px;
 padding:14px 16px;
 border-bottom:1px solid #eee;
-position:relative;
+transition:transform .2s;
 }
+
+/* IMAGE */
 
 .item img{
 width:56px;
@@ -201,6 +212,8 @@ object-fit:cover;
 border-radius:10px;
 flex-shrink:0;
 }
+
+/* CONTENT */
 
 .item-content{
 flex:1;
@@ -219,35 +232,6 @@ font-size:14px;
 .item-priority{
 font-size:14px;
 margin-top:2px;
-}
-
-/* DELETE BUTTON */
-
-.delete{
-position:absolute;
-right:16px;
-top:50%;
-transform:translateY(-50%);
-background:none;
-border:none;
-font-size:16px;
-color:#bbb;
-cursor:pointer;
-}
-
-/* HEART EFFECT */
-
-.heart{
-position:fixed;
-font-size:20px;
-pointer-events:none;
-animation:heartFly 1.2s ease forwards;
-}
-
-@keyframes heartFly{
-0%{transform:translateY(0) scale(.5);opacity:0;}
-20%{opacity:1;}
-100%{transform:translateY(-150px) scale(1.8);opacity:0;}
 }
 
 </style>
@@ -305,7 +289,7 @@ Danh sách mong muốn ❤️ (<span id="count">0</span>)
 
 </select>
 
-<button onclick="addGift(event)">Thêm vào Wishlist</button>
+<button onclick="addGift()">Thêm vào Wishlist</button>
 
 </div>
 
@@ -315,9 +299,7 @@ Danh sách mong muốn ❤️ (<span id="count">0</span>)
 
 <div class="popup-header">
 
-<div class="popup-title">Wishlist</div>
-
-<button class="close" onclick="togglePopup()">Đóng</button>
+Wishlist
 
 </div>
 
@@ -338,32 +320,14 @@ Danh sách mong muốn ❤️ (<span id="count">0</span>)
 
 let gifts=JSON.parse(localStorage.getItem("wishlist")) || []
 let currentTab="all"
+
 const list=document.getElementById("list")
-
-/* HEART EFFECT */
-
-function heartEffect(x,y){
-
-for(let i=0;i<6;i++){
-
-let h=document.createElement("div")
-h.className="heart"
-h.innerHTML="❤️"
-
-h.style.left=(x + Math.random()*40-20)+"px"
-h.style.top=(y + Math.random()*10)+"px"
-
-document.body.appendChild(h)
-
-setTimeout(()=>h.remove(),1200)
-
-}
-
-}
-
-/* CREATE ITEM */
+const popup=document.getElementById("popup")
 
 function createItem(g,i){
+
+let wrap=document.createElement("div")
+wrap.className="swipe-container"
 
 let item=document.createElement("div")
 item.className="item"
@@ -380,17 +344,48 @@ item.innerHTML=`
 
 </div>
 
-<button class="delete">✕</button>
-
 `
 
-item.querySelector(".delete").onclick=()=>removeGift(i,item)
+let del=document.createElement("div")
+del.className="delete-btn"
+del.innerText="Xóa"
 
-return item
+del.onclick=()=>removeGift(i)
 
+wrap.appendChild(del)
+wrap.appendChild(item)
+
+let startX=0
+
+item.addEventListener("touchstart",e=>{
+startX=e.touches[0].clientX
+})
+
+item.addEventListener("touchmove",e=>{
+
+let move=e.touches[0].clientX-startX
+
+if(move<0 && move>-80){
+item.style.transform=`translateX(${move}px)`
 }
 
-/* RENDER */
+})
+
+item.addEventListener("touchend",e=>{
+
+let move=e.changedTouches[0].clientX-startX
+
+if(move<-60){
+item.style.transform="translateX(-80px)"
+}else{
+item.style.transform=""
+}
+
+})
+
+return wrap
+
+}
 
 function render(){
 
@@ -408,8 +403,6 @@ list.appendChild(createItem(g,i))
 
 }
 
-/* IMAGE PREVIEW */
-
 function previewImage(e){
 
 let reader=new FileReader()
@@ -424,13 +417,7 @@ reader.readAsDataURL(e.target.files[0])
 
 }
 
-/* ADD */
-
-function addGift(e){
-
-let rect=e.target.getBoundingClientRect()
-
-heartEffect(rect.left+rect.width/2,rect.top)
+function addGift(){
 
 let name=document.getElementById("name").value
 let detail=document.getElementById("detail").value
@@ -467,20 +454,9 @@ localStorage.setItem("wishlist",JSON.stringify(gifts))
 
 render()
 
-document.getElementById("name").value=""
-document.getElementById("detail").value=""
-document.getElementById("image").value=""
-document.getElementById("preview").innerHTML=""
-
 }
 
-/* REMOVE */
-
-function removeGift(i,item){
-
-item.style.opacity="0"
-
-setTimeout(()=>{
+function removeGift(i){
 
 gifts.splice(i,1)
 
@@ -488,13 +464,9 @@ localStorage.setItem("wishlist",JSON.stringify(gifts))
 
 render()
 
-},250)
-
 }
 
 /* POPUP */
-
-const popup=document.getElementById("popup")
 
 let startY=0
 
@@ -525,12 +497,8 @@ popup.style.transform=""
 })
 
 function togglePopup(){
-
 popup.classList.toggle("active")
-
 }
-
-/* TAB */
 
 function switchTab(tab,e){
 
