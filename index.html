@@ -8,21 +8,17 @@
 
 <title>Wishlist</title>
 
-<link rel="apple-touch-icon" href="icon.png">
-
 <style>
 
 *{
 box-sizing:border-box;
 font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto;
--webkit-tap-highlight-color:transparent;
 }
 
 body{
 margin:0;
 background:#f3eee7;
 color:#4a4036;
-padding-top:env(safe-area-inset-top);
 }
 
 /* HEADER */
@@ -49,7 +45,19 @@ cursor:pointer;
 display:none;
 }
 
-/* USER */
+/* WISHLIST BUTTON */
+
+.wishlist-btn{
+background:#fff;
+padding:14px;
+text-align:center;
+font-weight:600;
+border-bottom:1px solid #eee;
+cursor:pointer;
+display:none;
+}
+
+/* USER SELECT */
 
 .users{
 padding:30px;
@@ -70,18 +78,6 @@ cursor:pointer;
 box-shadow:0 6px 20px rgba(0,0,0,.08);
 }
 
-/* BUTTON */
-
-.wishlist-btn{
-background:#fff;
-padding:14px;
-text-align:center;
-font-weight:600;
-border-bottom:1px solid #eee;
-cursor:pointer;
-display:none;
-}
-
 /* FORM */
 
 .container{
@@ -98,13 +94,12 @@ border-radius:16px;
 box-shadow:0 8px 25px rgba(0,0,0,0.06);
 }
 
-input,select,textarea{
+input,textarea,select{
 width:100%;
 padding:12px;
 margin-bottom:14px;
 border-radius:10px;
 border:1px solid #ddd;
-font-size:15px;
 }
 
 button{
@@ -120,9 +115,9 @@ cursor:pointer;
 /* IMAGE PREVIEW */
 
 .preview{
+display:none;
 position:relative;
 margin-bottom:10px;
-display:none;
 }
 
 .preview img{
@@ -134,12 +129,12 @@ border-radius:10px;
 position:absolute;
 right:10px;
 top:10px;
-background:#0007;
+background:#0008;
 color:white;
 border:none;
 border-radius:50%;
-width:26px;
-height:26px;
+width:28px;
+height:28px;
 cursor:pointer;
 }
 
@@ -150,13 +145,13 @@ position:fixed;
 bottom:0;
 left:0;
 width:100%;
-height:90%;
+height:85%;
 background:white;
 border-top-left-radius:24px;
 border-top-right-radius:24px;
 box-shadow:0 -10px 30px rgba(0,0,0,0.2);
 transform:translateY(100%);
-transition:transform .35s cubic-bezier(.22,1,.36,1);
+transition:transform .3s;
 }
 
 .popup.active{
@@ -164,111 +159,30 @@ transform:translateY(0);
 }
 
 .drag{
-width:36px;
+width:40px;
 height:4px;
 background:#ddd;
 border-radius:10px;
 margin:10px auto;
 }
 
-/* TABS */
-
-.tabs{
-display:flex;
-border-bottom:1px solid #eee;
-}
-
-.tab{
-flex:1;
-padding:10px;
-text-align:center;
-cursor:pointer;
-}
-
-.tab.active{
-background:#f5efe6;
-font-weight:600;
-}
-
-/* LIST */
-
 .list{
 overflow:auto;
 height:100%;
-padding-bottom:60px;
 }
 
 .item{
 display:flex;
-align-items:center;
 gap:12px;
 padding:14px 20px;
 border-bottom:1px solid #eee;
-position:relative;
-opacity:0;
-transform:translateY(20px);
-animation:itemIn .35s forwards;
-}
-
-@keyframes itemIn{
-to{
-opacity:1;
-transform:translateY(0);
-}
 }
 
 .item img{
 width:56px;
 height:56px;
-object-fit:cover;
 border-radius:10px;
-}
-
-.item-content{
-flex:1;
-}
-
-.item-name{
-font-weight:600;
-}
-
-.item-detail{
-opacity:.7;
-font-size:14px;
-}
-
-.item-priority{
-font-size:14px;
-}
-
-/* DELETE */
-
-.delete{
-position:absolute;
-right:4px;
-top:50%;
-transform:translateY(-50%);
-display:none;
-cursor:pointer;
-}
-
-.item.active .delete{
-display:block;
-}
-
-/* HEART */
-
-.heart{
-position:fixed;
-font-size:20px;
-pointer-events:none;
-animation:heartFly 1s ease forwards;
-}
-
-@keyframes heartFly{
-0%{transform:translateY(0) scale(.4);opacity:0;}
-20%{opacity:1;}
-100%{transform:translateY(-120px) scale(1.6);opacity:0;}
+object-fit:cover;
 }
 
 </style>
@@ -285,14 +199,20 @@ animation:heartFly 1s ease forwards;
 
 </div>
 
-<div class="users" id="users">
-
-<button class="user-btn" onclick="selectUser('nhim')">Nhím</button> <button class="user-btn" onclick="selectUser('an')">An</button>
-
+<div class="wishlist-btn" id="wishlistBtn" onclick="togglePopup()">
+Danh sách mong muốn ❤️
 </div>
 
-<div class="wishlist-btn" id="wishlistBtn" onclick="togglePopup()">
-Danh sách mong muốn ❤️ (<span id="count">0</span>)
+<div class="users" id="users">
+
+<button class="user-btn" onclick="selectUser('nhim')">
+Nhím
+</button>
+
+<button class="user-btn" onclick="selectUser('an')">
+An
+</button>
+
 </div>
 
 <div class="container" id="form">
@@ -326,13 +246,6 @@ Danh sách mong muốn ❤️ (<span id="count">0</span>)
 
 <div class="drag"></div>
 
-<div class="tabs">
-<div class="tab active" onclick="switchTab('all',event)">Tất cả</div>
-<div class="tab" onclick="switchTab('🥰',event)">🥰</div>
-<div class="tab" onclick="switchTab('🤭',event)">🤭</div>
-<div class="tab" onclick="switchTab('🙄',event)">🙄</div>
-</div>
-
 <div id="list" class="list"></div>
 
 </div>
@@ -361,8 +274,6 @@ const db=firebase.database()
 const storage=firebase.storage()
 
 let currentUser=null
-let gifts=[]
-let currentTab="all"
 let selectedFile=null
 
 const list=document.getElementById("list")
@@ -400,83 +311,37 @@ function listenData(){
 
 db.ref("wishlist/"+currentUser).on("value",snap=>{
 
-gifts=[]
+list.innerHTML=""
 
 snap.forEach(child=>{
 
-let g=child.val()
-g.id=child.key
+const g=child.val()
 
-gifts.push(g)
-
-})
-
-render()
-
-})
-
-}
-
-function render(){
-
-list.innerHTML=""
-
-let filtered=gifts.filter(g=>{
-
-if(currentTab==="all") return true
-return g.priority.includes(currentTab)
-
-})
-
-filtered.forEach(g=>{
-
-let item=document.createElement("div")
+const item=document.createElement("div")
 item.className="item"
 
 item.innerHTML=`
 <img src="${g.image||''}">
-<div class="item-content">
-<div class="item-name">${g.name}</div>
-<div class="item-detail">${g.detail||""}</div>
-<div class="item-priority">${g.priority}</div>
+<div>
+<div><b>${g.name}</b></div>
+<div>${g.detail||""}</div>
+<div>${g.priority}</div>
 </div>
-<div class="delete">✕</div>
 `
-
-item.onclick=()=>{
-document.querySelectorAll(".item").forEach(x=>x.classList.remove("active"))
-item.classList.add("active")
-}
-
-item.querySelector(".delete").onclick=e=>{
-e.stopPropagation()
-db.ref("wishlist/"+currentUser+"/"+g.id).remove()
-}
 
 list.appendChild(item)
 
 })
 
-document.getElementById("count").innerText=gifts.length
-
-}
-
-function switchTab(tab,e){
-
-currentTab=tab
-
-document.querySelectorAll(".tab").forEach(t=>t.classList.remove("active"))
-e.target.classList.add("active")
-
-render()
+})
 
 }
 
 function addGift(e){
 
-let name=document.getElementById("name").value
-let detail=document.getElementById("detail").value
-let priority=document.getElementById("priority").value
+const name=document.getElementById("name").value
+const detail=document.getElementById("detail").value
+const priority=document.getElementById("priority").value
 
 if(!name)return
 
@@ -484,10 +349,11 @@ heartEffect(e)
 
 if(selectedFile){
 
-let path="images/"+Date.now()+"_"+selectedFile.name
+const path="images/"+Date.now()+"_"+selectedFile.name
+const ref=storage.ref().child(path)
 
-storage.ref(path).put(selectedFile)
-.then(s=>s.ref.getDownloadURL())
+ref.put(selectedFile)
+.then(()=>ref.getDownloadURL())
 .then(url=>{
 saveGift(name,detail,priority,url)
 })
@@ -515,27 +381,6 @@ removeImage()
 
 }
 
-function heartEffect(e){
-
-let rect=e.target.getBoundingClientRect()
-
-for(let i=0;i<6;i++){
-
-let h=document.createElement("div")
-h.className="heart"
-h.innerHTML="❤️"
-
-h.style.left=(rect.left+Math.random()*40)+"px"
-h.style.top=rect.top+"px"
-
-document.body.appendChild(h)
-
-setTimeout(()=>h.remove(),1000)
-
-}
-
-}
-
 function togglePopup(force){
 
 let popup=document.getElementById("popup")
@@ -546,6 +391,28 @@ return
 }
 
 popup.classList.toggle("active")
+
+}
+
+/* HEART */
+
+function heartEffect(e){
+
+let rect=e.target.getBoundingClientRect()
+
+for(let i=0;i<6;i++){
+
+let h=document.createElement("div")
+h.innerHTML="❤️"
+h.style.position="fixed"
+h.style.left=(rect.left+Math.random()*40)+"px"
+h.style.top=rect.top+"px"
+
+document.body.appendChild(h)
+
+setTimeout(()=>h.remove(),1000)
+
+}
 
 }
 
@@ -593,7 +460,7 @@ popup.addEventListener("touchend",e=>{
 
 let move=e.changedTouches[0].clientY-startY
 
-if(move>120){
+if(move>100){
 togglePopup(false)
 }
 
