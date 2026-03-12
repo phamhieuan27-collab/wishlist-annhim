@@ -12,14 +12,12 @@
 *{
 box-sizing:border-box;
 font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto;
--webkit-tap-highlight-color:transparent;
 }
 
 body{
 margin:0;
 background:#f3eee7;
 color:#4a4036;
-padding-top:env(safe-area-inset-top);
 }
 
 /* HEADER */
@@ -27,7 +25,6 @@ padding-top:env(safe-area-inset-top);
 .header{
 background:linear-gradient(135deg,#e8dccb,#d6c2a5);
 padding:20px;
-padding-top:calc(env(safe-area-inset-top) + 20px);
 text-align:center;
 border-bottom-left-radius:28px;
 border-bottom-right-radius:28px;
@@ -35,7 +32,6 @@ border-bottom-right-radius:28px;
 
 .header h1{
 margin:0;
-font-size:26px;
 }
 
 /* SELECT USER */
@@ -44,7 +40,7 @@ font-size:26px;
 padding:30px;
 display:flex;
 flex-direction:column;
-gap:16px;
+gap:15px;
 max-width:400px;
 margin:auto;
 }
@@ -52,11 +48,21 @@ margin:auto;
 .user-btn{
 padding:16px;
 background:white;
-border-radius:16px;
 border:none;
+border-radius:16px;
 font-size:18px;
 cursor:pointer;
 box-shadow:0 6px 20px rgba(0,0,0,.08);
+}
+
+/* BACK */
+
+.back{
+position:absolute;
+left:15px;
+top:18px;
+font-size:14px;
+cursor:pointer;
 }
 
 /* FORM */
@@ -95,23 +101,6 @@ font-size:16px;
 cursor:pointer;
 }
 
-/* OVERLAY */
-
-.overlay{
-position:fixed;
-inset:0;
-background:rgba(0,0,0,0.2);
-backdrop-filter:blur(6px);
-opacity:0;
-pointer-events:none;
-transition:.3s;
-}
-
-.overlay.active{
-opacity:1;
-pointer-events:auto;
-}
-
 /* POPUP */
 
 .popup{
@@ -132,8 +121,6 @@ transition:.35s;
 transform:translateY(0);
 }
 
-/* LIST */
-
 .list{
 overflow:auto;
 height:100%;
@@ -152,8 +139,8 @@ position:relative;
 .item img{
 width:56px;
 height:56px;
-object-fit:cover;
 border-radius:10px;
+object-fit:cover;
 }
 
 .item-content{
@@ -173,6 +160,21 @@ cursor:pointer;
 display:block;
 }
 
+/* HEART */
+
+.heart{
+position:fixed;
+font-size:20px;
+pointer-events:none;
+animation:heartFly 1s ease forwards;
+}
+
+@keyframes heartFly{
+0%{transform:translateY(0) scale(.4);opacity:0;}
+20%{opacity:1;}
+100%{transform:translateY(-120px) scale(1.6);opacity:0;}
+}
+
 </style>
 
 </head>
@@ -181,9 +183,10 @@ display:block;
 
 <div class="header">
 <h1 id="title">Wishlist</h1>
+<div id="backBtn" class="back" onclick="goBack()" style="display:none">← Back</div>
 </div>
 
-<div class="users">
+<div class="users" id="users">
 
 <button class="user-btn" onclick="selectUser('nhim')">
 Nhím
@@ -211,18 +214,14 @@ An
 <option>🥰 Muốn lắm</option>
 </select>
 
-<button onclick="addGift()">Thêm vào Wishlist</button>
+<button onclick="addGift(event)">Thêm vào Wishlist</button>
 
 </div>
 
 </div>
-
-<div class="overlay" id="overlay"></div>
 
 <div class="popup" id="popup">
-
 <div id="list" class="list"></div>
-
 </div>
 
 <script type="module">
@@ -253,14 +252,27 @@ window.selectUser=function(user){
 
 currentUser=user
 
-document.querySelector(".users").style.display="none"
-
+document.getElementById("users").style.display="none"
 document.getElementById("form").style.display="block"
+document.getElementById("popup").classList.add("active")
+
+document.getElementById("backBtn").style.display="block"
 
 document.getElementById("title").innerText=
 user==="nhim"?"Wishlist của Nhím":"Wishlist của An"
 
 loadData()
+
+}
+
+window.goBack=function(){
+
+document.getElementById("users").style.display="flex"
+document.getElementById("form").style.display="none"
+document.getElementById("popup").classList.remove("active")
+document.getElementById("backBtn").style.display="none"
+
+document.getElementById("title").innerText="Wishlist"
 
 }
 
@@ -303,11 +315,8 @@ div.classList.add("active")
 }
 
 div.querySelector(".delete").onclick=(e)=>{
-
 e.stopPropagation()
-
 remove(ref(db,"wishlist/"+currentUser+"/"+id))
-
 }
 
 list.appendChild(div)
@@ -318,7 +327,24 @@ list.appendChild(div)
 
 }
 
-window.addGift=function(){
+window.addGift=function(e){
+
+let rect=e.target.getBoundingClientRect()
+
+for(let i=0;i<6;i++){
+
+let h=document.createElement("div")
+h.className="heart"
+h.innerHTML="❤️"
+
+h.style.left=(rect.left+Math.random()*40)+"px"
+h.style.top=rect.top+"px"
+
+document.body.appendChild(h)
+
+setTimeout(()=>h.remove(),1000)
+
+}
 
 let name=document.getElementById("name").value
 let detail=document.getElementById("detail").value
@@ -337,12 +363,7 @@ uploadBytes(imgRef,file).then(()=>{
 getDownloadURL(imgRef).then(url=>{
 
 push(ref(db,"wishlist/"+currentUser),{
-
-name,
-detail,
-priority,
-image:url
-
+name,detail,priority,image:url
 })
 
 })
@@ -352,11 +373,7 @@ image:url
 }else{
 
 push(ref(db,"wishlist/"+currentUser),{
-
-name,
-detail,
-priority
-
+name,detail,priority
 })
 
 }
