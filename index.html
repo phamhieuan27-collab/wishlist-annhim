@@ -105,7 +105,7 @@ display:block;
 
 <div class="header">
 <h2>Wishlist</h2>
-<div>WISHLIST</div>
+<div>Mọi thứ v muốn, c sẽ nhớ</div>
 </div>
 
 <div class="users">
@@ -120,9 +120,7 @@ display:block;
 <div class="form">
 
 <input id="name" placeholder="Tên quà">
-
 <textarea id="detail" placeholder="Chi tiết"></textarea>
-
 <input type="file" id="image">
 
 <select id="priority">
@@ -139,13 +137,11 @@ display:block;
 
 </div>
 
-
 <script type="module">
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import { getDatabase, ref, push, onValue, remove } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
 import { getStorage, ref as storageRef, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js";
-
 
 const firebaseConfig = {
 apiKey: "AIzaSyAUrHsJyOoyutwiTg9kSKxCiZX3E8U043w",
@@ -154,10 +150,8 @@ databaseURL: "https://nhiman-default-rtdb.asia-southeast1.firebasedatabase.app",
 projectId: "nhiman",
 storageBucket: "nhiman.firebasestorage.app",
 messagingSenderId: "958208065341",
-appId: "1:958208065341:web:1860b555603af5fb664f54",
-measurementId: "G-96QS7R0Y35"
+appId: "1:958208065341:web:1860b555603af5fb664f54"
 };
-
 
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
@@ -165,17 +159,16 @@ const storage = getStorage(app);
 
 let currentUser="nhim";
 
-
 window.openList = function(user){
-  currentUser = user;
-  document.getElementById("popup").classList.add("active");
-  document.getElementById("title").innerText =
-    user === "nhim" ? "Wishlist của Nhím" : "Wishlist của An";
-  loadData();
-}
+currentUser=user;
 
-}
+document.getElementById("popup").classList.add("active");
 
+document.getElementById("title").innerText=
+user==="nhim"?"Wishlist của Nhím":"Wishlist của An";
+
+loadData();
+}
 
 function loadData(){
 
@@ -221,7 +214,6 @@ list.appendChild(div);
 
 }
 
-
 window.addGift=function(){
 
 let name=document.getElementById("name").value;
@@ -230,7 +222,6 @@ let priority=document.getElementById("priority").value;
 let file=document.getElementById("image").files[0];
 
 if(!name) return;
-
 
 if(file){
 
@@ -268,4 +259,3 @@ priority
 
 </body>
 </html>
-
