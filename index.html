@@ -12,6 +12,7 @@
 *{
 box-sizing:border-box;
 font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto;
+-webkit-tap-highlight-color:transparent;
 }
 
 body{
@@ -28,25 +29,36 @@ padding:20px;
 text-align:center;
 border-bottom-left-radius:28px;
 border-bottom-right-radius:28px;
+position:relative;
 }
 
 .header h1{
 margin:0;
+font-size:24px;
 }
 
-/* SELECT USER */
+.back{
+position:absolute;
+left:16px;
+top:22px;
+font-size:14px;
+cursor:pointer;
+display:none;
+}
+
+/* USER SELECT */
 
 .users{
 padding:30px;
 display:flex;
 flex-direction:column;
-gap:15px;
-max-width:400px;
+gap:16px;
+max-width:420px;
 margin:auto;
 }
 
 .user-btn{
-padding:16px;
+padding:18px;
 background:white;
 border:none;
 border-radius:16px;
@@ -55,14 +67,16 @@ cursor:pointer;
 box-shadow:0 6px 20px rgba(0,0,0,.08);
 }
 
-/* BACK */
+/* BUTTON */
 
-.back{
-position:absolute;
-left:15px;
-top:18px;
-font-size:14px;
+.wishlist-btn{
+background:#fff;
+padding:14px;
+text-align:center;
+font-weight:600;
+border-bottom:1px solid #eee;
 cursor:pointer;
+display:none;
 }
 
 /* FORM */
@@ -114,11 +128,19 @@ border-top-left-radius:24px;
 border-top-right-radius:24px;
 box-shadow:0 -10px 30px rgba(0,0,0,0.2);
 transform:translateY(100%);
-transition:.35s;
+transition:.35s cubic-bezier(.22,1,.36,1);
 }
 
 .popup.active{
 transform:translateY(0);
+}
+
+.drag{
+width:36px;
+height:4px;
+background:#ddd;
+border-radius:10px;
+margin:10px auto;
 }
 
 .list{
@@ -139,8 +161,8 @@ position:relative;
 .item img{
 width:56px;
 height:56px;
-border-radius:10px;
 object-fit:cover;
+border-radius:10px;
 }
 
 .item-content{
@@ -175,6 +197,25 @@ animation:heartFly 1s ease forwards;
 100%{transform:translateY(-120px) scale(1.6);opacity:0;}
 }
 
+.undo{
+position:fixed;
+bottom:30px;
+left:50%;
+transform:translateX(-50%);
+background:#333;
+color:white;
+padding:12px 16px;
+border-radius:10px;
+display:none;
+}
+
+.undo button{
+background:none;
+border:none;
+color:#ffd479;
+font-weight:600;
+}
+
 </style>
 
 </head>
@@ -182,8 +223,11 @@ animation:heartFly 1s ease forwards;
 <body>
 
 <div class="header">
+
+<div class="back" id="backBtn" onclick="goBack()">← Back</div>
+
 <h1 id="title">Wishlist</h1>
-<div id="backBtn" class="back" onclick="goBack()" style="display:none">← Back</div>
+
 </div>
 
 <div class="users" id="users">
@@ -196,6 +240,10 @@ Nhím
 An
 </button>
 
+</div>
+
+<div class="wishlist-btn" id="wishlistBtn" onclick="togglePopup()">
+Danh sách mong muốn ❤️ (<span id="count">0</span>)
 </div>
 
 <div class="container" id="form">
@@ -221,7 +269,16 @@ An
 </div>
 
 <div class="popup" id="popup">
+
+<div class="drag"></div>
+
 <div id="list" class="list"></div>
+
+</div>
+
+<div class="undo" id="undoBar">
+Đã xoá
+<button onclick="undoDelete()">Hoàn tác</button>
 </div>
 
 <script type="module">
@@ -230,8 +287,7 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/fireba
 import { getDatabase, ref, push, onValue, remove } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
 import { getStorage, ref as storageRef, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js";
 
-const firebaseConfig = {
-
+const firebaseConfig={
 apiKey:"AIzaSyAUrHsJyOoyutwiTg9kSKxCiZX3E8U043w",
 authDomain:"nhiman.firebaseapp.com",
 databaseURL:"https://nhiman-default-rtdb.asia-southeast1.firebasedatabase.app",
@@ -239,7 +295,6 @@ projectId:"nhiman",
 storageBucket:"nhiman.firebasestorage.app",
 messagingSenderId:"958208065341",
 appId:"1:958208065341:web:1860b555603af5fb664f54"
-
 }
 
 const app=initializeApp(firebaseConfig)
@@ -247,6 +302,8 @@ const db=getDatabase(app)
 const storage=getStorage(app)
 
 let currentUser=null
+let lastDeleted=null
+let lastIndex=null
 
 window.selectUser=function(user){
 
@@ -254,8 +311,7 @@ currentUser=user
 
 document.getElementById("users").style.display="none"
 document.getElementById("form").style.display="block"
-document.getElementById("popup").classList.add("active")
-
+document.getElementById("wishlistBtn").style.display="block"
 document.getElementById("backBtn").style.display="block"
 
 document.getElementById("title").innerText=
@@ -269,10 +325,12 @@ window.goBack=function(){
 
 document.getElementById("users").style.display="flex"
 document.getElementById("form").style.display="none"
-document.getElementById("popup").classList.remove("active")
+document.getElementById("wishlistBtn").style.display="none"
 document.getElementById("backBtn").style.display="none"
 
 document.getElementById("title").innerText="Wishlist"
+
+togglePopup(false)
 
 }
 
@@ -284,13 +342,16 @@ onValue(ref(db,"wishlist/"+currentUser),snap=>{
 
 list.innerHTML=""
 
+let count=0
+
 snap.forEach(child=>{
+
+count++
 
 let g=child.val()
 let id=child.key
 
 let div=document.createElement("div")
-
 div.className="item"
 
 div.innerHTML=`
@@ -315,15 +376,43 @@ div.classList.add("active")
 }
 
 div.querySelector(".delete").onclick=(e)=>{
+
 e.stopPropagation()
+
+lastDeleted=g
+lastIndex=id
+
 remove(ref(db,"wishlist/"+currentUser+"/"+id))
+
+document.getElementById("undoBar").style.display="block"
+
+setTimeout(()=>{
+
+document.getElementById("undoBar").style.display="none"
+
+},4000)
+
 }
 
 list.appendChild(div)
 
 })
 
+document.getElementById("count").innerText=count
+
 })
+
+}
+
+window.undoDelete=function(){
+
+if(lastDeleted){
+
+push(ref(db,"wishlist/"+currentUser),lastDeleted)
+
+document.getElementById("undoBar").style.display="none"
+
+}
 
 }
 
@@ -379,6 +468,50 @@ name,detail,priority
 }
 
 }
+
+window.togglePopup=function(force){
+
+let popup=document.getElementById("popup")
+
+if(force===false){
+popup.classList.remove("active")
+return
+}
+
+popup.classList.toggle("active")
+
+}
+
+/* DRAG CLOSE */
+
+let popup=document.getElementById("popup")
+let startY=0
+
+popup.addEventListener("touchstart",e=>{
+startY=e.touches[0].clientY
+})
+
+popup.addEventListener("touchmove",e=>{
+
+let move=e.touches[0].clientY-startY
+
+if(move>0){
+popup.style.transform=`translateY(${move}px)`
+}
+
+})
+
+popup.addEventListener("touchend",e=>{
+
+let move=e.changedTouches[0].clientY-startY
+
+if(move>120){
+togglePopup(false)
+}
+
+popup.style.transform=""
+
+})
 
 </script>
 
