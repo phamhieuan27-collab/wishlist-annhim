@@ -1,42 +1,118 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
+
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+
 <title>Wishlist</title>
 
 <style>
 
-body{
-font-family:-apple-system;
-margin:0;
-background:#f5f5f5;
+*{
+box-sizing:border-box;
+font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto;
+-webkit-tap-highlight-color:transparent;
 }
+
+body{
+margin:0;
+background:#f3eee7;
+color:#4a4036;
+padding-top:env(safe-area-inset-top);
+}
+
+/* HEADER */
 
 .header{
-background:#e9ddc9;
-padding:30px;
+background:linear-gradient(135deg,#e8dccb,#d6c2a5);
+padding:20px;
+padding-top:calc(env(safe-area-inset-top) + 20px);
 text-align:center;
+border-bottom-left-radius:28px;
+border-bottom-right-radius:28px;
 }
 
+.header h1{
+margin:0;
+font-size:26px;
+}
+
+/* SELECT USER */
+
 .users{
-padding:40px;
+padding:30px;
 display:flex;
 flex-direction:column;
-gap:20px;
+gap:16px;
 max-width:400px;
 margin:auto;
 }
 
 .user-btn{
-padding:20px;
-font-size:20px;
+padding:16px;
 background:white;
-border:none;
 border-radius:16px;
+border:none;
+font-size:18px;
 cursor:pointer;
-box-shadow:0 4px 15px rgba(0,0,0,0.08);
+box-shadow:0 6px 20px rgba(0,0,0,.08);
 }
+
+/* FORM */
+
+.container{
+padding:20px;
+max-width:520px;
+margin:auto;
+display:none;
+}
+
+.card{
+background:white;
+padding:18px;
+border-radius:16px;
+box-shadow:0 8px 25px rgba(0,0,0,0.06);
+}
+
+input,select,textarea{
+width:100%;
+padding:12px;
+margin-top:6px;
+margin-bottom:14px;
+border-radius:10px;
+border:1px solid #ddd;
+font-size:15px;
+}
+
+button{
+width:100%;
+padding:14px;
+border:none;
+border-radius:12px;
+background:#cbb79a;
+font-size:16px;
+cursor:pointer;
+}
+
+/* OVERLAY */
+
+.overlay{
+position:fixed;
+inset:0;
+background:rgba(0,0,0,0.2);
+backdrop-filter:blur(6px);
+opacity:0;
+pointer-events:none;
+transition:.3s;
+}
+
+.overlay.active{
+opacity:1;
+pointer-events:auto;
+}
+
+/* POPUP */
 
 .popup{
 position:fixed;
@@ -45,44 +121,43 @@ left:0;
 width:100%;
 height:90%;
 background:white;
-border-radius:20px 20px 0 0;
+border-top-left-radius:24px;
+border-top-right-radius:24px;
+box-shadow:0 -10px 30px rgba(0,0,0,0.2);
 transform:translateY(100%);
-transition:0.3s;
+transition:.35s;
 }
 
 .popup.active{
 transform:translateY(0);
 }
 
-.form{
-padding:20px;
-}
-
-input,textarea,select{
-width:100%;
-padding:10px;
-margin-bottom:10px;
-}
+/* LIST */
 
 .list{
-padding:10px;
 overflow:auto;
-height:55%;
+height:100%;
+padding-bottom:60px;
 }
 
 .item{
 display:flex;
-gap:10px;
-padding:10px;
+align-items:center;
+gap:12px;
+padding:14px 20px;
 border-bottom:1px solid #eee;
 position:relative;
 }
 
 .item img{
-width:50px;
-height:50px;
-border-radius:8px;
+width:56px;
+height:56px;
 object-fit:cover;
+border-radius:10px;
+}
+
+.item-content{
+flex:1;
 }
 
 .delete{
@@ -90,8 +165,8 @@ position:absolute;
 right:10px;
 top:50%;
 transform:translateY(-50%);
-cursor:pointer;
 display:none;
+cursor:pointer;
 }
 
 .item.active .delete{
@@ -99,28 +174,35 @@ display:block;
 }
 
 </style>
+
 </head>
 
 <body>
 
 <div class="header">
-<h2>Wishlist</h2>
-<div>Mọi thứ v muốn, c sẽ nhớ</div>
+<h1 id="title">Wishlist</h1>
 </div>
 
 <div class="users">
-<button class="user-btn" onclick="openList('nhim')">Nhím</button>
-<button class="user-btn" onclick="openList('an')">An</button>
+
+<button class="user-btn" onclick="selectUser('nhim')">
+Nhím
+</button>
+
+<button class="user-btn" onclick="selectUser('an')">
+An
+</button>
+
 </div>
 
-<div class="popup" id="popup">
+<div class="container" id="form">
 
-<div style="text-align:center;padding:15px;font-weight:600" id="title"></div>
+<div class="card">
 
-<div class="form">
+<input id="name" placeholder="Tên món quà">
 
-<input id="name" placeholder="Tên quà">
 <textarea id="detail" placeholder="Chi tiết"></textarea>
+
 <input type="file" id="image">
 
 <select id="priority">
@@ -133,7 +215,13 @@ display:block;
 
 </div>
 
-<div class="list" id="list"></div>
+</div>
+
+<div class="overlay" id="overlay"></div>
+
+<div class="popup" id="popup">
+
+<div id="list" class="list"></div>
 
 </div>
 
@@ -144,112 +232,132 @@ import { getDatabase, ref, push, onValue, remove } from "https://www.gstatic.com
 import { getStorage, ref as storageRef, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js";
 
 const firebaseConfig = {
-apiKey: "AIzaSyAUrHsJyOoyutwiTg9kSKxCiZX3E8U043w",
-authDomain: "nhiman.firebaseapp.com",
-databaseURL: "https://nhiman-default-rtdb.asia-southeast1.firebasedatabase.app",
-projectId: "nhiman",
-storageBucket: "nhiman.firebasestorage.app",
-messagingSenderId: "958208065341",
-appId: "1:958208065341:web:1860b555603af5fb664f54"
-};
 
-const app = initializeApp(firebaseConfig);
-const db = getDatabase(app);
-const storage = getStorage(app);
+apiKey:"AIzaSyAUrHsJyOoyutwiTg9kSKxCiZX3E8U043w",
+authDomain:"nhiman.firebaseapp.com",
+databaseURL:"https://nhiman-default-rtdb.asia-southeast1.firebasedatabase.app",
+projectId:"nhiman",
+storageBucket:"nhiman.firebasestorage.app",
+messagingSenderId:"958208065341",
+appId:"1:958208065341:web:1860b555603af5fb664f54"
 
-let currentUser="nhim";
+}
 
-window.openList = function(user){
-currentUser=user;
+const app=initializeApp(firebaseConfig)
+const db=getDatabase(app)
+const storage=getStorage(app)
 
-document.getElementById("popup").classList.add("active");
+let currentUser=null
+
+window.selectUser=function(user){
+
+currentUser=user
+
+document.querySelector(".users").style.display="none"
+
+document.getElementById("form").style.display="block"
 
 document.getElementById("title").innerText=
-user==="nhim"?"Wishlist của Nhím":"Wishlist của An";
+user==="nhim"?"Wishlist của Nhím":"Wishlist của An"
 
-loadData();
+loadData()
+
 }
 
 function loadData(){
 
-const list=document.getElementById("list");
+const list=document.getElementById("list")
 
 onValue(ref(db,"wishlist/"+currentUser),snap=>{
 
-list.innerHTML="";
+list.innerHTML=""
 
 snap.forEach(child=>{
 
-let g=child.val();
-let id=child.key;
+let g=child.val()
+let id=child.key
 
-let div=document.createElement("div");
-div.className="item";
+let div=document.createElement("div")
+
+div.className="item"
 
 div.innerHTML=`
+
 <img src="${g.image||''}">
-<div>
-<b>${g.name}</b><br>
-${g.detail||""}<br>
-${g.priority}
+
+<div class="item-content">
+
+<div><b>${g.name}</b></div>
+<div>${g.detail||""}</div>
+<div>${g.priority}</div>
+
 </div>
+
 <div class="delete">✕</div>
-`;
+
+`
 
 div.onclick=()=>{
-document.querySelectorAll(".item").forEach(x=>x.classList.remove("active"));
-div.classList.add("active");
+document.querySelectorAll(".item").forEach(x=>x.classList.remove("active"))
+div.classList.add("active")
 }
 
 div.querySelector(".delete").onclick=(e)=>{
-e.stopPropagation();
-remove(ref(db,"wishlist/"+currentUser+"/"+id));
+
+e.stopPropagation()
+
+remove(ref(db,"wishlist/"+currentUser+"/"+id))
+
 }
 
-list.appendChild(div);
+list.appendChild(div)
 
-});
+})
 
-});
+})
 
 }
 
 window.addGift=function(){
 
-let name=document.getElementById("name").value;
-let detail=document.getElementById("detail").value;
-let priority=document.getElementById("priority").value;
-let file=document.getElementById("image").files[0];
+let name=document.getElementById("name").value
+let detail=document.getElementById("detail").value
+let priority=document.getElementById("priority").value
+let file=document.getElementById("image").files[0]
 
-if(!name) return;
+if(!name)return
 
 if(file){
 
-let path="images/"+Date.now()+file.name;
-let imgRef=storageRef(storage,path);
+let path="images/"+Date.now()+file.name
+let imgRef=storageRef(storage,path)
 
 uploadBytes(imgRef,file).then(()=>{
 
 getDownloadURL(imgRef).then(url=>{
 
 push(ref(db,"wishlist/"+currentUser),{
+
 name,
 detail,
 priority,
 image:url
-});
 
-});
+})
 
-});
+})
+
+})
 
 }else{
 
 push(ref(db,"wishlist/"+currentUser),{
+
 name,
 detail,
 priority
-});
+
+})
 
 }
 
