@@ -2,8 +2,10 @@
 
 <html lang="vi">
 <head>
+
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+
 <title>Wishlist</title>
 
 <link rel="apple-touch-icon" href="icon.png">
@@ -66,6 +68,18 @@ border-radius:16px;
 font-size:18px;
 cursor:pointer;
 box-shadow:0 6px 20px rgba(0,0,0,.08);
+}
+
+/* BUTTON */
+
+.wishlist-btn{
+background:#fff;
+padding:14px;
+text-align:center;
+font-weight:600;
+border-bottom:1px solid #eee;
+cursor:pointer;
+display:none;
 }
 
 /* FORM */
@@ -157,6 +171,25 @@ border-radius:10px;
 margin:10px auto;
 }
 
+/* TABS */
+
+.tabs{
+display:flex;
+border-bottom:1px solid #eee;
+}
+
+.tab{
+flex:1;
+padding:10px;
+text-align:center;
+cursor:pointer;
+}
+
+.tab.active{
+background:#f5efe6;
+font-weight:600;
+}
+
 /* LIST */
 
 .list{
@@ -164,8 +197,6 @@ overflow:auto;
 height:100%;
 padding-bottom:60px;
 }
-
-/* ITEM */
 
 .item{
 display:flex;
@@ -217,7 +248,12 @@ position:absolute;
 right:4px;
 top:50%;
 transform:translateY(-50%);
+display:none;
 cursor:pointer;
+}
+
+.item.active .delete{
+display:block;
 }
 
 /* HEART */
@@ -242,13 +278,21 @@ animation:heartFly 1s ease forwards;
 <body>
 
 <div class="header">
+
 <div class="back" id="backBtn">← Back</div>
+
 <h1 id="title">Wishlist</h1>
+
 </div>
 
 <div class="users" id="users">
-<button class="user-btn" onclick="selectUser('nhim')">Nhím</button>
-<button class="user-btn" onclick="selectUser('an')">An</button>
+
+<button class="user-btn" onclick="selectUser('nhim')">Nhím</button> <button class="user-btn" onclick="selectUser('an')">An</button>
+
+</div>
+
+<div class="wishlist-btn" id="wishlistBtn" onclick="togglePopup()">
+Danh sách mong muốn ❤️ (<span id="count">0</span>)
 </div>
 
 <div class="container" id="form">
@@ -272,15 +316,25 @@ animation:heartFly 1s ease forwards;
 <option>🥰 Muốn lắm</option>
 </select>
 
-<button onclick="addGift(event)">Thêm vào Wishlist</button> <button onclick="togglePopup()">Danh sách mong muốn</button>
+<button onclick="addGift(event)">Thêm vào Wishlist</button>
 
 </div>
 
 </div>
 
 <div class="popup" id="popup">
+
 <div class="drag"></div>
+
+<div class="tabs">
+<div class="tab active" onclick="switchTab('all',event)">Tất cả</div>
+<div class="tab" onclick="switchTab('🥰',event)">🥰</div>
+<div class="tab" onclick="switchTab('🤭',event)">🤭</div>
+<div class="tab" onclick="switchTab('🙄',event)">🙄</div>
+</div>
+
 <div id="list" class="list"></div>
+
 </div>
 
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
@@ -290,8 +344,6 @@ animation:heartFly 1s ease forwards;
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-storage-compat.js"></script>
 
 <script>
-
-/* FIREBASE */
 
 const firebaseConfig={
 apiKey:"AIzaSyAUrHsJyOoyutwiTg9kSKxCiZX3E8U043w",
@@ -310,11 +362,10 @@ const storage=firebase.storage()
 
 let currentUser=null
 let gifts=[]
+let currentTab="all"
 let selectedFile=null
 
 const list=document.getElementById("list")
-
-/* USER */
 
 function selectUser(user){
 
@@ -322,6 +373,7 @@ currentUser=user
 
 document.getElementById("users").style.display="none"
 document.getElementById("form").style.display="block"
+document.getElementById("wishlistBtn").style.display="block"
 document.getElementById("backBtn").style.display="block"
 
 document.getElementById("title").innerText=
@@ -331,12 +383,11 @@ listenData()
 
 }
 
-/* BACK */
-
 document.getElementById("backBtn").onclick=()=>{
 
 document.getElementById("users").style.display="flex"
 document.getElementById("form").style.display="none"
+document.getElementById("wishlistBtn").style.display="none"
 document.getElementById("backBtn").style.display="none"
 
 document.getElementById("title").innerText="Wishlist"
@@ -344,8 +395,6 @@ document.getElementById("title").innerText="Wishlist"
 togglePopup(false)
 
 }
-
-/* LISTENER */
 
 function listenData(){
 
@@ -368,13 +417,18 @@ render()
 
 }
 
-/* RENDER */
-
 function render(){
 
 list.innerHTML=""
 
-gifts.forEach(g=>{
+let filtered=gifts.filter(g=>{
+
+if(currentTab==="all") return true
+return g.priority.includes(currentTab)
+
+})
+
+filtered.forEach(g=>{
 
 let item=document.createElement("div")
 item.className="item"
@@ -389,7 +443,13 @@ item.innerHTML=`
 <div class="delete">✕</div>
 `
 
-item.querySelector(".delete").onclick=()=>{
+item.onclick=()=>{
+document.querySelectorAll(".item").forEach(x=>x.classList.remove("active"))
+item.classList.add("active")
+}
+
+item.querySelector(".delete").onclick=e=>{
+e.stopPropagation()
 db.ref("wishlist/"+currentUser+"/"+g.id).remove()
 }
 
@@ -397,9 +457,20 @@ list.appendChild(item)
 
 })
 
+document.getElementById("count").innerText=gifts.length
+
 }
 
-/* ADD */
+function switchTab(tab,e){
+
+currentTab=tab
+
+document.querySelectorAll(".tab").forEach(t=>t.classList.remove("active"))
+e.target.classList.add("active")
+
+render()
+
+}
 
 function addGift(e){
 
@@ -414,14 +485,11 @@ heartEffect(e)
 if(selectedFile){
 
 let path="images/"+Date.now()+"_"+selectedFile.name
-let ref=storage.ref().child(path)
 
-ref.put(selectedFile)
-.then(()=>ref.getDownloadURL())
+storage.ref(path).put(selectedFile)
+.then(s=>s.ref.getDownloadURL())
 .then(url=>{
-
 saveGift(name,detail,priority,url)
-
 })
 .catch(()=>{
 saveGift(name,detail,priority,null)
@@ -435,8 +503,6 @@ saveGift(name,detail,priority,null)
 
 }
 
-/* SAVE */
-
 function saveGift(name,detail,priority,image){
 
 db.ref("wishlist/"+currentUser).push({
@@ -448,8 +514,6 @@ document.getElementById("detail").value=""
 removeImage()
 
 }
-
-/* HEART */
 
 function heartEffect(e){
 
@@ -471,8 +535,6 @@ setTimeout(()=>h.remove(),1000)
 }
 
 }
-
-/* POPUP */
 
 function togglePopup(force){
 
