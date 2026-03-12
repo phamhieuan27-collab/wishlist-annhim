@@ -2,7 +2,6 @@
 
 <html lang="vi">
 <head>
-
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 
@@ -34,9 +33,8 @@ position:relative;
 
 .back{
 position:absolute;
-left:16px;
-top:22px;
-font-size:14px;
+left:15px;
+top:20px;
 cursor:pointer;
 display:none;
 }
@@ -78,7 +76,7 @@ border-radius:16px;
 box-shadow:0 8px 25px rgba(0,0,0,0.06);
 }
 
-input,select,textarea{
+input,textarea,select{
 width:100%;
 padding:12px;
 margin-bottom:14px;
@@ -100,20 +98,21 @@ cursor:pointer;
 /* IMAGE PREVIEW */
 
 .preview{
+margin-bottom:10px;
+display:none;
 position:relative;
-margin-bottom:14px;
 }
 
 .preview img{
 width:100%;
-border-radius:12px;
+border-radius:10px;
 }
 
 .remove-img{
 position:absolute;
 right:10px;
 top:10px;
-background:#0008;
+background:#0007;
 color:white;
 border:none;
 border-radius:50%;
@@ -129,18 +128,25 @@ position:fixed;
 bottom:0;
 left:0;
 width:100%;
-height:90%;
+height:85%;
 background:white;
 border-top-left-radius:24px;
 border-top-right-radius:24px;
 box-shadow:0 -10px 30px rgba(0,0,0,0.2);
-
 transform:translateY(100%);
-transition:transform .35s cubic-bezier(.22,1,.36,1);
+transition:transform .3s ease;
 }
 
 .popup.active{
 transform:translateY(0);
+}
+
+.drag{
+width:40px;
+height:4px;
+background:#ddd;
+border-radius:10px;
+margin:10px auto;
 }
 
 .list{
@@ -154,7 +160,6 @@ display:flex;
 gap:12px;
 padding:14px 20px;
 border-bottom:1px solid #eee;
-position:relative;
 }
 
 .item img{
@@ -162,23 +167,6 @@ width:56px;
 height:56px;
 border-radius:10px;
 object-fit:cover;
-}
-
-.item-content{
-flex:1;
-}
-
-.delete{
-position:absolute;
-right:10px;
-top:50%;
-transform:translateY(-50%);
-cursor:pointer;
-display:none;
-}
-
-.item.active .delete{
-display:block;
 }
 
 </style>
@@ -189,9 +177,9 @@ display:block;
 
 <div class="header">
 
-<div class="back" id="backBtn" onclick="goBack()">← Back</div>
+<div class="back" id="backBtn">← Back</div>
 
-<h1 id="title">Wishlist</h1>
+<h2 id="title">Wishlist</h2>
 
 </div>
 
@@ -211,7 +199,7 @@ display:block;
 
 <input type="file" id="imageInput">
 
-<div id="preview" class="preview" style="display:none">
+<div class="preview" id="preview">
 <img id="previewImg">
 <button class="remove-img" onclick="removeImage()">✕</button>
 </div>
@@ -224,19 +212,27 @@ display:block;
 
 <button onclick="addGift()">Thêm vào Wishlist</button>
 
+<button onclick="openPopup()">Danh sách mong muốn</button>
+
 </div>
 
 </div>
 
 <div class="popup" id="popup">
+
+<div class="drag"></div>
+
 <div id="list" class="list"></div>
+
 </div>
 
-<script type="module">
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getDatabase, ref, push, onValue, remove } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
-import { getStorage, ref as storageRef, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js";
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-storage-compat.js"></script>
+
+<script>
 
 const firebaseConfig={
 apiKey:"AIzaSyAUrHsJyOoyutwiTg9kSKxCiZX3E8U043w",
@@ -248,12 +244,142 @@ messagingSenderId:"958208065341",
 appId:"1:958208065341:web:1860b555603af5fb664f54"
 }
 
-const app=initializeApp(firebaseConfig)
-const db=getDatabase(app)
-const storage=getStorage(app)
+firebase.initializeApp(firebaseConfig)
+
+const db=firebase.database()
+const storage=firebase.storage()
 
 let currentUser=null
 let selectedFile=null
+
+const list=document.getElementById("list")
+
+function selectUser(user){
+
+currentUser=user
+
+document.getElementById("users").style.display="none"
+document.getElementById("form").style.display="block"
+document.getElementById("backBtn").style.display="block"
+
+document.getElementById("title").innerText=
+user==="nhim"?"Wishlist của Nhím":"Wishlist của An"
+
+listenData()
+
+}
+
+document.getElementById("backBtn").onclick=()=>{
+
+document.getElementById("users").style.display="flex"
+document.getElementById("form").style.display="none"
+document.getElementById("backBtn").style.display="none"
+document.getElementById("title").innerText="Wishlist"
+
+closePopup()
+
+}
+
+function listenData(){
+
+db.ref("wishlist/"+currentUser).on("value",snap=>{
+
+list.innerHTML=""
+
+snap.forEach(child=>{
+
+const g=child.val()
+
+const item=document.createElement("div")
+item.className="item"
+
+item.innerHTML=`
+<img src="${g.image||''}">
+<div>
+<div><b>${g.name}</b></div>
+<div>${g.detail||""}</div>
+<div>${g.priority}</div>
+</div>
+`
+
+list.appendChild(item)
+
+})
+
+})
+
+}
+
+function addGift(){
+
+const name=document.getElementById("name").value
+const detail=document.getElementById("detail").value
+const priority=document.getElementById("priority").value
+
+if(!name)return
+
+if(selectedFile){
+
+const path="images/"+Date.now()+selectedFile.name
+
+storage.ref(path).put(selectedFile).then(()=>{
+
+storage.ref(path).getDownloadURL().then(url=>{
+
+saveGift(name,detail,priority,url)
+
+})
+
+})
+
+}else{
+
+saveGift(name,detail,priority,null)
+
+}
+
+}
+
+function saveGift(name,detail,priority,image){
+
+db.ref("wishlist/"+currentUser).push({
+name,detail,priority,image
+})
+
+document.getElementById("name").value=""
+document.getElementById("detail").value=""
+removeImage()
+
+}
+
+function openPopup(){
+document.getElementById("popup").classList.add("active")
+}
+
+function closePopup(){
+document.getElementById("popup").classList.remove("active")
+}
+
+/* DRAG */
+
+let popup=document.getElementById("popup")
+let startY=0
+
+popup.addEventListener("touchstart",e=>{
+startY=e.touches[0].clientY
+})
+
+popup.addEventListener("touchend",e=>{
+
+let move=e.changedTouches[0].clientY-startY
+
+if(move>100){
+closePopup()
+}
+
+})
+
+/* IMAGE */
 
 const imageInput=document.getElementById("imageInput")
 const preview=document.getElementById("preview")
@@ -276,125 +402,11 @@ reader.readAsDataURL(selectedFile)
 
 }
 
-window.removeImage=function(){
+function removeImage(){
 
 selectedFile=null
 imageInput.value=""
 preview.style.display="none"
-
-}
-
-window.selectUser=function(user){
-
-currentUser=user
-
-document.getElementById("users").style.display="none"
-document.getElementById("form").style.display="block"
-document.getElementById("backBtn").style.display="block"
-document.getElementById("popup").classList.add("active")
-
-document.getElementById("title").innerText=
-user==="nhim"?"Wishlist của Nhím":"Wishlist của An"
-
-listenWishlist()
-
-}
-
-window.goBack=function(){
-
-document.getElementById("users").style.display="flex"
-document.getElementById("form").style.display="none"
-document.getElementById("backBtn").style.display="none"
-document.getElementById("popup").classList.remove("active")
-
-}
-
-function listenWishlist(){
-
-const list=document.getElementById("list")
-
-onValue(ref(db,"wishlist/"+currentUser),snap=>{
-
-list.innerHTML=""
-
-snap.forEach(child=>{
-
-let g=child.val()
-let id=child.key
-
-let div=document.createElement("div")
-div.className="item"
-
-div.innerHTML=`
-
-<img src="${g.image||''}">
-
-<div class="item-content">
-
-<div><b>${g.name}</b></div>
-<div>${g.detail||""}</div>
-<div>${g.priority}</div>
-
-</div>
-
-<div class="delete">✕</div>
-
-`
-
-div.onclick=()=>{
-document.querySelectorAll(".item").forEach(x=>x.classList.remove("active"))
-div.classList.add("active")
-}
-
-div.querySelector(".delete").onclick=e=>{
-e.stopPropagation()
-remove(ref(db,"wishlist/"+currentUser+"/"+id))
-}
-
-list.appendChild(div)
-
-})
-
-})
-
-}
-
-window.addGift=function(){
-
-let name=document.getElementById("name").value
-let detail=document.getElementById("detail").value
-let priority=document.getElementById("priority").value
-
-if(!name)return
-
-if(selectedFile){
-
-let path="images/"+Date.now()+selectedFile.name
-let imgRef=storageRef(storage,path)
-
-uploadBytes(imgRef,selectedFile).then(()=>{
-
-getDownloadURL(imgRef).then(url=>{
-
-push(ref(db,"wishlist/"+currentUser),{
-name,detail,priority,image:url
-})
-
-})
-
-})
-
-}else{
-
-push(ref(db,"wishlist/"+currentUser),{
-name,detail,priority
-})
-
-}
-
-document.getElementById("name").value=""
-document.getElementById("detail").value=""
-removeImage()
 
 }
 
