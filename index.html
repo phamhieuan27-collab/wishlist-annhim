@@ -117,7 +117,7 @@ font-size:16px;
 cursor:pointer;
 }
 
-/* IMAGE */
+/* IMAGE PREVIEW */
 
 .preview{
 position:relative;
@@ -157,7 +157,6 @@ border-top-right-radius:24px;
 box-shadow:0 -10px 30px rgba(0,0,0,0.2);
 transform:translateY(100%);
 transition:transform .35s cubic-bezier(.22,1,.36,1);
-will-change:transform;
 }
 
 .popup.active{
@@ -272,28 +271,6 @@ animation:heartFly 1s ease forwards;
 100%{transform:translateY(-120px) scale(1.6);opacity:0;}
 }
 
-/* UNDO */
-
-.undo{
-position:fixed;
-bottom:30px;
-left:50%;
-transform:translateX(-50%);
-background:#333;
-color:white;
-padding:12px 16px;
-border-radius:10px;
-display:none;
-}
-
-.undo button{
-background:none;
-border:none;
-color:#ffd479;
-font-weight:600;
-cursor:pointer;
-}
-
 </style>
 
 </head>
@@ -360,11 +337,6 @@ Danh sách mong muốn ❤️ (<span id="count">0</span>)
 
 </div>
 
-<div class="undo" id="undoBar">
-Đã xoá
-<button onclick="undoDelete()">Hoàn tác</button>
-</div>
-
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
@@ -372,8 +344,6 @@ Danh sách mong muốn ❤️ (<span id="count">0</span>)
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-storage-compat.js"></script>
 
 <script>
-
-/* FIREBASE */
 
 const firebaseConfig={
 apiKey:"AIzaSyAUrHsJyOoyutwiTg9kSKxCiZX3E8U043w",
@@ -390,16 +360,12 @@ firebase.initializeApp(firebaseConfig)
 const db=firebase.database()
 const storage=firebase.storage()
 
-/* STATE */
-
 let currentUser=null
-let currentTab="all"
 let gifts=[]
+let currentTab="all"
 let selectedFile=null
 
 const list=document.getElementById("list")
-
-/* USER SELECT */
 
 function selectUser(user){
 
@@ -417,21 +383,18 @@ listenData()
 
 }
 
-/* BACK */
-
 document.getElementById("backBtn").onclick=()=>{
 
 document.getElementById("users").style.display="flex"
 document.getElementById("form").style.display="none"
 document.getElementById("wishlistBtn").style.display="none"
 document.getElementById("backBtn").style.display="none"
+
 document.getElementById("title").innerText="Wishlist"
 
 togglePopup(false)
 
 }
-
-/* DATA LISTENER */
 
 function listenData(){
 
@@ -454,8 +417,6 @@ render()
 
 }
 
-/* RENDER */
-
 function render(){
 
 list.innerHTML=""
@@ -463,12 +424,11 @@ list.innerHTML=""
 let filtered=gifts.filter(g=>{
 
 if(currentTab==="all") return true
-
 return g.priority.includes(currentTab)
 
 })
 
-filtered.forEach((g,i)=>{
+filtered.forEach(g=>{
 
 let item=document.createElement("div")
 item.className="item"
@@ -501,8 +461,6 @@ document.getElementById("count").innerText=gifts.length
 
 }
 
-/* TAB */
-
 function switchTab(tab,e){
 
 currentTab=tab
@@ -511,6 +469,83 @@ document.querySelectorAll(".tab").forEach(t=>t.classList.remove("active"))
 e.target.classList.add("active")
 
 render()
+
+}
+
+function addGift(e){
+
+let name=document.getElementById("name").value
+let detail=document.getElementById("detail").value
+let priority=document.getElementById("priority").value
+
+if(!name)return
+
+heartEffect(e)
+
+if(selectedFile){
+
+let path="images/"+Date.now()+"_"+selectedFile.name
+
+storage.ref(path).put(selectedFile)
+.then(s=>s.ref.getDownloadURL())
+.then(url=>{
+saveGift(name,detail,priority,url)
+})
+.catch(()=>{
+saveGift(name,detail,priority,null)
+})
+
+}else{
+
+saveGift(name,detail,priority,null)
+
+}
+
+}
+
+function saveGift(name,detail,priority,image){
+
+db.ref("wishlist/"+currentUser).push({
+name,detail,priority,image
+})
+
+document.getElementById("name").value=""
+document.getElementById("detail").value=""
+removeImage()
+
+}
+
+function heartEffect(e){
+
+let rect=e.target.getBoundingClientRect()
+
+for(let i=0;i<6;i++){
+
+let h=document.createElement("div")
+h.className="heart"
+h.innerHTML="❤️"
+
+h.style.left=(rect.left+Math.random()*40)+"px"
+h.style.top=rect.top+"px"
+
+document.body.appendChild(h)
+
+setTimeout(()=>h.remove(),1000)
+
+}
+
+}
+
+function togglePopup(force){
+
+let popup=document.getElementById("popup")
+
+if(force===false){
+popup.classList.remove("active")
+return
+}
+
+popup.classList.toggle("active")
 
 }
 
@@ -542,92 +577,6 @@ function removeImage(){
 selectedFile=null
 imageInput.value=""
 preview.style.display="none"
-
-}
-
-/* ADD */
-
-function addGift(e){
-
-let name=document.getElementById("name").value
-let detail=document.getElementById("detail").value
-let priority=document.getElementById("priority").value
-
-if(!name)return
-
-heartEffect(e)
-
-if(selectedFile){
-
-let path="images/"+Date.now()+selectedFile.name
-
-storage.ref(path).put(selectedFile).then(()=>{
-
-storage.ref(path).getDownloadURL().then(url=>{
-
-saveGift(name,detail,priority,url)
-
-})
-
-})
-
-}else{
-
-saveGift(name,detail,priority,null)
-
-}
-
-}
-
-/* SAVE */
-
-function saveGift(name,detail,priority,image){
-
-db.ref("wishlist/"+currentUser).push({
-name,detail,priority,image
-})
-
-document.getElementById("name").value=""
-document.getElementById("detail").value=""
-removeImage()
-
-}
-
-/* HEART */
-
-function heartEffect(e){
-
-let rect=e.target.getBoundingClientRect()
-
-for(let i=0;i<6;i++){
-
-let h=document.createElement("div")
-h.className="heart"
-h.innerHTML="❤️"
-
-h.style.left=(rect.left+Math.random()*40)+"px"
-h.style.top=rect.top+"px"
-
-document.body.appendChild(h)
-
-setTimeout(()=>h.remove(),1000)
-
-}
-
-}
-
-/* POPUP */
-
-function togglePopup(force){
-
-let popup=document.getElementById("popup")
-
-if(force===false){
-popup.classList.remove("active")
-return
-}
-
-popup.classList.toggle("active")
 
 }
 
