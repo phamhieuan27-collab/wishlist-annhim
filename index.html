@@ -2,22 +2,27 @@
 
 <html lang="vi">
 <head>
+
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 
 <title>Wishlist</title>
+
+<link rel="apple-touch-icon" href="icon.png">
 
 <style>
 
 *{
 box-sizing:border-box;
 font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto;
+-webkit-tap-highlight-color:transparent;
 }
 
 body{
 margin:0;
 background:#f3eee7;
 color:#4a4036;
+padding-top:env(safe-area-inset-top);
 }
 
 /* HEADER */
@@ -31,10 +36,15 @@ border-bottom-right-radius:28px;
 position:relative;
 }
 
+.header h1{
+margin:0;
+font-size:26px;
+}
+
 .back{
 position:absolute;
-left:15px;
-top:20px;
+left:16px;
+top:22px;
 cursor:pointer;
 display:none;
 }
@@ -60,6 +70,18 @@ cursor:pointer;
 box-shadow:0 6px 20px rgba(0,0,0,.08);
 }
 
+/* BUTTON */
+
+.wishlist-btn{
+background:#fff;
+padding:14px;
+text-align:center;
+font-weight:600;
+border-bottom:1px solid #eee;
+cursor:pointer;
+display:none;
+}
+
 /* FORM */
 
 .container{
@@ -76,7 +98,7 @@ border-radius:16px;
 box-shadow:0 8px 25px rgba(0,0,0,0.06);
 }
 
-input,textarea,select{
+input,select,textarea{
 width:100%;
 padding:12px;
 margin-bottom:14px;
@@ -95,12 +117,12 @@ font-size:16px;
 cursor:pointer;
 }
 
-/* IMAGE PREVIEW */
+/* IMAGE */
 
 .preview{
+position:relative;
 margin-bottom:10px;
 display:none;
-position:relative;
 }
 
 .preview img{
@@ -116,8 +138,8 @@ background:#0007;
 color:white;
 border:none;
 border-radius:50%;
-width:28px;
-height:28px;
+width:26px;
+height:26px;
 cursor:pointer;
 }
 
@@ -128,13 +150,14 @@ position:fixed;
 bottom:0;
 left:0;
 width:100%;
-height:85%;
+height:90%;
 background:white;
 border-top-left-radius:24px;
 border-top-right-radius:24px;
 box-shadow:0 -10px 30px rgba(0,0,0,0.2);
 transform:translateY(100%);
-transition:transform .3s ease;
+transition:transform .35s cubic-bezier(.22,1,.36,1);
+will-change:transform;
 }
 
 .popup.active{
@@ -142,12 +165,33 @@ transform:translateY(0);
 }
 
 .drag{
-width:40px;
+width:36px;
 height:4px;
 background:#ddd;
 border-radius:10px;
 margin:10px auto;
 }
+
+/* TABS */
+
+.tabs{
+display:flex;
+border-bottom:1px solid #eee;
+}
+
+.tab{
+flex:1;
+padding:10px;
+text-align:center;
+cursor:pointer;
+}
+
+.tab.active{
+background:#f5efe6;
+font-weight:600;
+}
+
+/* LIST */
 
 .list{
 overflow:auto;
@@ -157,16 +201,97 @@ padding-bottom:60px;
 
 .item{
 display:flex;
+align-items:center;
 gap:12px;
 padding:14px 20px;
 border-bottom:1px solid #eee;
+position:relative;
+opacity:0;
+transform:translateY(20px);
+animation:itemIn .35s forwards;
+}
+
+@keyframes itemIn{
+to{
+opacity:1;
+transform:translateY(0);
+}
 }
 
 .item img{
 width:56px;
 height:56px;
-border-radius:10px;
 object-fit:cover;
+border-radius:10px;
+}
+
+.item-content{
+flex:1;
+}
+
+.item-name{
+font-weight:600;
+}
+
+.item-detail{
+opacity:.7;
+font-size:14px;
+}
+
+.item-priority{
+font-size:14px;
+}
+
+/* DELETE */
+
+.delete{
+position:absolute;
+right:4px;
+top:50%;
+transform:translateY(-50%);
+display:none;
+cursor:pointer;
+}
+
+.item.active .delete{
+display:block;
+}
+
+/* HEART */
+
+.heart{
+position:fixed;
+font-size:20px;
+pointer-events:none;
+animation:heartFly 1s ease forwards;
+}
+
+@keyframes heartFly{
+0%{transform:translateY(0) scale(.4);opacity:0;}
+20%{opacity:1;}
+100%{transform:translateY(-120px) scale(1.6);opacity:0;}
+}
+
+/* UNDO */
+
+.undo{
+position:fixed;
+bottom:30px;
+left:50%;
+transform:translateX(-50%);
+background:#333;
+color:white;
+padding:12px 16px;
+border-radius:10px;
+display:none;
+}
+
+.undo button{
+background:none;
+border:none;
+color:#ffd479;
+font-weight:600;
+cursor:pointer;
 }
 
 </style>
@@ -179,7 +304,7 @@ object-fit:cover;
 
 <div class="back" id="backBtn">← Back</div>
 
-<h2 id="title">Wishlist</h2>
+<h1 id="title">Wishlist</h1>
 
 </div>
 
@@ -187,6 +312,10 @@ object-fit:cover;
 
 <button class="user-btn" onclick="selectUser('nhim')">Nhím</button> <button class="user-btn" onclick="selectUser('an')">An</button>
 
+</div>
+
+<div class="wishlist-btn" id="wishlistBtn" onclick="togglePopup()">
+Danh sách mong muốn ❤️ (<span id="count">0</span>)
 </div>
 
 <div class="container" id="form">
@@ -210,9 +339,7 @@ object-fit:cover;
 <option>🥰 Muốn lắm</option>
 </select>
 
-<button onclick="addGift()">Thêm vào Wishlist</button>
-
-<button onclick="openPopup()">Danh sách mong muốn</button>
+<button onclick="addGift(event)">Thêm vào Wishlist</button>
 
 </div>
 
@@ -222,8 +349,20 @@ object-fit:cover;
 
 <div class="drag"></div>
 
+<div class="tabs">
+<div class="tab active" onclick="switchTab('all',event)">Tất cả</div>
+<div class="tab" onclick="switchTab('🥰',event)">🥰</div>
+<div class="tab" onclick="switchTab('🤭',event)">🤭</div>
+<div class="tab" onclick="switchTab('🙄',event)">🙄</div>
+</div>
+
 <div id="list" class="list"></div>
 
+</div>
+
+<div class="undo" id="undoBar">
+Đã xoá
+<button onclick="undoDelete()">Hoàn tác</button>
 </div>
 
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
@@ -233,6 +372,8 @@ object-fit:cover;
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-storage-compat.js"></script>
 
 <script>
+
+/* FIREBASE */
 
 const firebaseConfig={
 apiKey:"AIzaSyAUrHsJyOoyutwiTg9kSKxCiZX3E8U043w",
@@ -249,10 +390,16 @@ firebase.initializeApp(firebaseConfig)
 const db=firebase.database()
 const storage=firebase.storage()
 
+/* STATE */
+
 let currentUser=null
+let currentTab="all"
+let gifts=[]
 let selectedFile=null
 
 const list=document.getElementById("list")
+
+/* USER SELECT */
 
 function selectUser(user){
 
@@ -260,6 +407,7 @@ currentUser=user
 
 document.getElementById("users").style.display="none"
 document.getElementById("form").style.display="block"
+document.getElementById("wishlistBtn").style.display="block"
 document.getElementById("backBtn").style.display="block"
 
 document.getElementById("title").innerText=
@@ -269,115 +417,102 @@ listenData()
 
 }
 
+/* BACK */
+
 document.getElementById("backBtn").onclick=()=>{
 
 document.getElementById("users").style.display="flex"
 document.getElementById("form").style.display="none"
+document.getElementById("wishlistBtn").style.display="none"
 document.getElementById("backBtn").style.display="none"
 document.getElementById("title").innerText="Wishlist"
 
-closePopup()
+togglePopup(false)
 
 }
+
+/* DATA LISTENER */
 
 function listenData(){
 
 db.ref("wishlist/"+currentUser).on("value",snap=>{
 
-list.innerHTML=""
+gifts=[]
 
 snap.forEach(child=>{
 
-const g=child.val()
+let g=child.val()
+g.id=child.key
 
-const item=document.createElement("div")
+gifts.push(g)
+
+})
+
+render()
+
+})
+
+}
+
+/* RENDER */
+
+function render(){
+
+list.innerHTML=""
+
+let filtered=gifts.filter(g=>{
+
+if(currentTab==="all") return true
+
+return g.priority.includes(currentTab)
+
+})
+
+filtered.forEach((g,i)=>{
+
+let item=document.createElement("div")
 item.className="item"
 
 item.innerHTML=`
 <img src="${g.image||''}">
-<div>
-<div><b>${g.name}</b></div>
-<div>${g.detail||""}</div>
-<div>${g.priority}</div>
+<div class="item-content">
+<div class="item-name">${g.name}</div>
+<div class="item-detail">${g.detail||""}</div>
+<div class="item-priority">${g.priority}</div>
 </div>
+<div class="delete">✕</div>
 `
+
+item.onclick=()=>{
+document.querySelectorAll(".item").forEach(x=>x.classList.remove("active"))
+item.classList.add("active")
+}
+
+item.querySelector(".delete").onclick=e=>{
+e.stopPropagation()
+db.ref("wishlist/"+currentUser+"/"+g.id).remove()
+}
 
 list.appendChild(item)
 
 })
 
-})
+document.getElementById("count").innerText=gifts.length
 
 }
 
-function addGift(){
+/* TAB */
 
-const name=document.getElementById("name").value
-const detail=document.getElementById("detail").value
-const priority=document.getElementById("priority").value
+function switchTab(tab,e){
 
-if(!name)return
+currentTab=tab
 
-if(selectedFile){
+document.querySelectorAll(".tab").forEach(t=>t.classList.remove("active"))
+e.target.classList.add("active")
 
-const path="images/"+Date.now()+selectedFile.name
-
-storage.ref(path).put(selectedFile).then(()=>{
-
-storage.ref(path).getDownloadURL().then(url=>{
-
-saveGift(name,detail,priority,url)
-
-})
-
-})
-
-}else{
-
-saveGift(name,detail,priority,null)
+render()
 
 }
-
-}
-
-function saveGift(name,detail,priority,image){
-
-db.ref("wishlist/"+currentUser).push({
-name,detail,priority,image
-})
-
-document.getElementById("name").value=""
-document.getElementById("detail").value=""
-removeImage()
-
-}
-
-function openPopup(){
-document.getElementById("popup").classList.add("active")
-}
-
-function closePopup(){
-document.getElementById("popup").classList.remove("active")
-}
-
-/* DRAG */
-
-let popup=document.getElementById("popup")
-let startY=0
-
-popup.addEventListener("touchstart",e=>{
-startY=e.touches[0].clientY
-})
-
-popup.addEventListener("touchend",e=>{
-
-let move=e.changedTouches[0].clientY-startY
-
-if(move>100){
-closePopup()
-}
-
-})
 
 /* IMAGE */
 
@@ -409,6 +544,111 @@ imageInput.value=""
 preview.style.display="none"
 
 }
+
+/* ADD */
+
+function addGift(e){
+
+let name=document.getElementById("name").value
+let detail=document.getElementById("detail").value
+let priority=document.getElementById("priority").value
+
+if(!name)return
+
+heartEffect(e)
+
+if(selectedFile){
+
+let path="images/"+Date.now()+selectedFile.name
+
+storage.ref(path).put(selectedFile).then(()=>{
+
+storage.ref(path).getDownloadURL().then(url=>{
+
+saveGift(name,detail,priority,url)
+
+})
+
+})
+
+}else{
+
+saveGift(name,detail,priority,null)
+
+}
+
+}
+
+/* SAVE */
+
+function saveGift(name,detail,priority,image){
+
+db.ref("wishlist/"+currentUser).push({
+name,detail,priority,image
+})
+
+document.getElementById("name").value=""
+document.getElementById("detail").value=""
+removeImage()
+
+}
+
+/* HEART */
+
+function heartEffect(e){
+
+let rect=e.target.getBoundingClientRect()
+
+for(let i=0;i<6;i++){
+
+let h=document.createElement("div")
+h.className="heart"
+h.innerHTML="❤️"
+
+h.style.left=(rect.left+Math.random()*40)+"px"
+h.style.top=rect.top+"px"
+
+document.body.appendChild(h)
+
+setTimeout(()=>h.remove(),1000)
+
+}
+
+}
+
+/* POPUP */
+
+function togglePopup(force){
+
+let popup=document.getElementById("popup")
+
+if(force===false){
+popup.classList.remove("active")
+return
+}
+
+popup.classList.toggle("active")
+
+}
+
+/* DRAG CLOSE */
+
+let popup=document.getElementById("popup")
+let startY=0
+
+popup.addEventListener("touchstart",e=>{
+startY=e.touches[0].clientY
+})
+
+popup.addEventListener("touchend",e=>{
+
+let move=e.changedTouches[0].clientY-startY
+
+if(move>120){
+togglePopup(false)
+}
+
+})
 
 </script>
 
