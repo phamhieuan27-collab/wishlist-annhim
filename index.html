@@ -2,9 +2,8 @@
 
 <html lang="vi">
 <head>
-
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="viewport" content="width=device-width,initial-scale=1">
 
 <title>Wishlist</title>
 
@@ -13,6 +12,7 @@
 *{
 box-sizing:border-box;
 font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto;
+-webkit-tap-highlight-color:transparent;
 }
 
 body{
@@ -45,7 +45,7 @@ cursor:pointer;
 display:none;
 }
 
-/* WISHLIST BUTTON */
+/* BUTTON */
 
 .wishlist-btn{
 background:#fff;
@@ -57,7 +57,7 @@ cursor:pointer;
 display:none;
 }
 
-/* USER SELECT */
+/* USER */
 
 .users{
 padding:30px;
@@ -112,7 +112,7 @@ font-size:16px;
 cursor:pointer;
 }
 
-/* IMAGE PREVIEW */
+/* IMAGE */
 
 .preview{
 display:none;
@@ -145,13 +145,13 @@ position:fixed;
 bottom:0;
 left:0;
 width:100%;
-height:85%;
+height:90%;
 background:white;
 border-top-left-radius:24px;
 border-top-right-radius:24px;
 box-shadow:0 -10px 30px rgba(0,0,0,0.2);
 transform:translateY(100%);
-transition:transform .3s;
+transition:transform .35s cubic-bezier(.22,1,.36,1);
 }
 
 .popup.active{
@@ -166,6 +166,27 @@ border-radius:10px;
 margin:10px auto;
 }
 
+/* TABS */
+
+.tabs{
+display:flex;
+border-bottom:1px solid #eee;
+}
+
+.tab{
+flex:1;
+padding:10px;
+text-align:center;
+cursor:pointer;
+}
+
+.tab.active{
+background:#f5efe6;
+font-weight:600;
+}
+
+/* LIST */
+
 .list{
 overflow:auto;
 height:100%;
@@ -173,9 +194,13 @@ height:100%;
 
 .item{
 display:flex;
+align-items:center;
 gap:12px;
 padding:14px 20px;
 border-bottom:1px solid #eee;
+position:relative;
+background:white;
+transition:.25s;
 }
 
 .item img{
@@ -183,6 +208,55 @@ width:56px;
 height:56px;
 border-radius:10px;
 object-fit:cover;
+}
+
+.item-content{
+flex:1;
+}
+
+/* DELETE */
+
+.delete{
+position:absolute;
+right:-80px;
+top:0;
+bottom:0;
+width:80px;
+background:#ff3b30;
+color:white;
+display:flex;
+align-items:center;
+justify-content:center;
+font-weight:600;
+}
+
+/* BREAK */
+
+.item.break{
+transform:scale(.7) rotate(6deg);
+opacity:0;
+}
+
+/* UNDO */
+
+.undo{
+position:fixed;
+bottom:30px;
+left:50%;
+transform:translateX(-50%);
+background:#333;
+color:white;
+padding:12px 16px;
+border-radius:10px;
+display:none;
+}
+
+.undo button{
+background:none;
+border:none;
+color:#ffd479;
+font-weight:600;
+cursor:pointer;
 }
 
 </style>
@@ -205,13 +279,7 @@ Danh sách mong muốn ❤️
 
 <div class="users" id="users">
 
-<button class="user-btn" onclick="selectUser('nhim')">
-Nhím
-</button>
-
-<button class="user-btn" onclick="selectUser('an')">
-An
-</button>
+<button class="user-btn" onclick="selectUser('nhim')">Nhím</button> <button class="user-btn" onclick="selectUser('an')">An</button>
 
 </div>
 
@@ -236,7 +304,7 @@ An
 <option>🥰 Muốn lắm</option>
 </select>
 
-<button onclick="addGift(event)">Thêm vào Wishlist</button>
+<button onclick="addGift()">Thêm vào Wishlist</button>
 
 </div>
 
@@ -246,8 +314,20 @@ An
 
 <div class="drag"></div>
 
+<div class="tabs">
+<div class="tab active" onclick="switchTab('all',event)">Tất cả</div>
+<div class="tab" onclick="switchTab('🥰',event)">🥰</div>
+<div class="tab" onclick="switchTab('🤭',event)">🤭</div>
+<div class="tab" onclick="switchTab('🙄',event)">🙄</div>
+</div>
+
 <div id="list" class="list"></div>
 
+</div>
+
+<div class="undo" id="undoBar">
+Đã xoá
+<button onclick="undoDelete()">Hoàn tác</button>
 </div>
 
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
@@ -274,7 +354,8 @@ const db=firebase.database()
 const storage=firebase.storage()
 
 let currentUser=null
-let selectedFile=null
+let gifts=[]
+let lastDeleted=null
 
 const list=document.getElementById("list")
 
@@ -287,9 +368,6 @@ document.getElementById("form").style.display="block"
 document.getElementById("wishlistBtn").style.display="block"
 document.getElementById("backBtn").style.display="block"
 
-document.getElementById("title").innerText=
-user==="nhim"?"Wishlist của Nhím":"Wishlist của An"
-
 listenData()
 
 }
@@ -301,8 +379,6 @@ document.getElementById("form").style.display="none"
 document.getElementById("wishlistBtn").style.display="none"
 document.getElementById("backBtn").style.display="none"
 
-document.getElementById("title").innerText="Wishlist"
-
 togglePopup(false)
 
 }
@@ -311,73 +387,80 @@ function listenData(){
 
 db.ref("wishlist/"+currentUser).on("value",snap=>{
 
-list.innerHTML=""
+gifts=[]
 
 snap.forEach(child=>{
+let g=child.val()
+g.id=child.key
+gifts.push(g)
+})
 
-const g=child.val()
+render()
 
-const item=document.createElement("div")
+})
+
+}
+
+function render(){
+
+list.innerHTML=""
+
+gifts.forEach(g=>{
+
+let item=document.createElement("div")
 item.className="item"
 
 item.innerHTML=`
 <img src="${g.image||''}">
-<div>
+<div class="item-content">
 <div><b>${g.name}</b></div>
 <div>${g.detail||""}</div>
 <div>${g.priority}</div>
 </div>
+<div class="delete">Xoá</div>
 `
+
+item.querySelector(".delete").onclick=()=>{
+
+lastDeleted=g
+
+item.classList.add("break")
+
+setTimeout(()=>{
+
+db.ref("wishlist/"+currentUser+"/"+g.id).remove()
+
+showUndo()
+
+},250)
+
+}
 
 list.appendChild(item)
 
 })
 
-})
+}
+
+function showUndo(){
+
+const bar=document.getElementById("undoBar")
+
+bar.style.display="block"
+
+setTimeout(()=>bar.style.display="none",4000)
 
 }
 
-function addGift(e){
+function undoDelete(){
 
-const name=document.getElementById("name").value
-const detail=document.getElementById("detail").value
-const priority=document.getElementById("priority").value
+if(lastDeleted){
 
-if(!name)return
+db.ref("wishlist/"+currentUser).push(lastDeleted)
 
-heartEffect(e)
-
-if(selectedFile){
-
-const path="images/"+Date.now()+"_"+selectedFile.name
-const ref=storage.ref().child(path)
-
-ref.put(selectedFile)
-.then(()=>ref.getDownloadURL())
-.then(url=>{
-saveGift(name,detail,priority,url)
-})
-.catch(()=>{
-saveGift(name,detail,priority,null)
-})
-
-}else{
-
-saveGift(name,detail,priority,null)
+document.getElementById("undoBar").style.display="none"
 
 }
-
-}
-
-function saveGift(name,detail,priority,image){
-
-db.ref("wishlist/"+currentUser).push({
-name,detail,priority,image
-})
-
-document.getElementById("name").value=""
-document.getElementById("detail").value=""
-removeImage()
 
 }
 
@@ -393,78 +476,6 @@ return
 popup.classList.toggle("active")
 
 }
-
-/* HEART */
-
-function heartEffect(e){
-
-let rect=e.target.getBoundingClientRect()
-
-for(let i=0;i<6;i++){
-
-let h=document.createElement("div")
-h.innerHTML="❤️"
-h.style.position="fixed"
-h.style.left=(rect.left+Math.random()*40)+"px"
-h.style.top=rect.top+"px"
-
-document.body.appendChild(h)
-
-setTimeout(()=>h.remove(),1000)
-
-}
-
-}
-
-/* IMAGE */
-
-const imageInput=document.getElementById("imageInput")
-const preview=document.getElementById("preview")
-const previewImg=document.getElementById("previewImg")
-
-imageInput.onchange=e=>{
-
-selectedFile=e.target.files[0]
-
-if(!selectedFile)return
-
-const reader=new FileReader()
-
-reader.onload=ev=>{
-previewImg.src=ev.target.result
-preview.style.display="block"
-}
-
-reader.readAsDataURL(selectedFile)
-
-}
-
-function removeImage(){
-
-selectedFile=null
-imageInput.value=""
-preview.style.display="none"
-
-}
-
-/* DRAG CLOSE */
-
-let popup=document.getElementById("popup")
-let startY=0
-
-popup.addEventListener("touchstart",e=>{
-startY=e.touches[0].clientY
-})
-
-popup.addEventListener("touchend",e=>{
-
-let move=e.changedTouches[0].clientY-startY
-
-if(move>100){
-togglePopup(false)
-}
-
-})
 
 </script>
 
