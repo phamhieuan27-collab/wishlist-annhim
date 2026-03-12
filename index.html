@@ -166,16 +166,13 @@ const storage = getStorage(app);
 let currentUser="nhim";
 
 
-window.openList=function(user){
-
-currentUser=user;
-
-document.getElementById("popup").classList.add("active");
-
-document.getElementById("title").innerText=
-user==="nhim"?"Wishlist của Nhím":"Wishlist của An";
-
-loadData();
+window.openList = function(user){
+  currentUser = user;
+  document.getElementById("popup").classList.add("active");
+  document.getElementById("title").innerText =
+    user === "nhim" ? "Wishlist của Nhím" : "Wishlist của An";
+  loadData();
+}
 
 }
 
@@ -271,3 +268,4 @@ priority
 
 </body>
 </html>
+
