@@ -68,7 +68,7 @@ cursor:pointer;
 box-shadow:0 6px 20px rgba(0,0,0,.08);
 }
 
-/* BUTTON */
+/* WISHLIST BUTTON */
 
 .wishlist-btn{
 background:#fff;
@@ -132,7 +132,6 @@ box-shadow:0 -10px 30px rgba(0,0,0,0.2);
 transform:translateY(100%);
 transition:transform .35s cubic-bezier(.22,1,.36,1);
 will-change:transform;
-touch-action:none;
 }
 
 .popup.active{
@@ -251,7 +250,7 @@ An
 
 </div>
 
-<div class="wishlist-btn" id="wishlistBtn" onclick="togglePopup()">
+<div class="wishlist-btn" id="wishlistBtn" onclick="openPopup()">
 Danh sách mong muốn ❤️ (<span id="count">0</span>)
 </div>
 
@@ -325,7 +324,7 @@ document.getElementById("backBtn").style.display="block"
 document.getElementById("title").innerText=
 user==="nhim"?"Wishlist của Nhím":"Wishlist của An"
 
-loadData()
+listenWishlist()
 
 }
 
@@ -338,11 +337,11 @@ document.getElementById("backBtn").style.display="none"
 
 document.getElementById("title").innerText="Wishlist"
 
-togglePopup(false)
+closePopup()
 
 }
 
-function loadData(){
+function listenWishlist(){
 
 const list=document.getElementById("list")
 
@@ -392,11 +391,7 @@ lastDeleted=g
 
 remove(ref(db,"wishlist/"+currentUser+"/"+id))
 
-document.getElementById("undoBar").style.display="block"
-
-setTimeout(()=>{
-document.getElementById("undoBar").style.display="none"
-},4000)
+showUndo()
 
 }
 
@@ -407,6 +402,18 @@ list.appendChild(div)
 document.getElementById("count").innerText=count
 
 })
+
+}
+
+function showUndo(){
+
+const bar=document.getElementById("undoBar")
+
+bar.style.display="block"
+
+setTimeout(()=>{
+bar.style.display="none"
+},4000)
 
 }
 
@@ -424,22 +431,7 @@ document.getElementById("undoBar").style.display="none"
 
 window.addGift=function(e){
 
-let rect=e.target.getBoundingClientRect()
-
-for(let i=0;i<6;i++){
-
-let h=document.createElement("div")
-h.className="heart"
-h.innerHTML="❤️"
-
-h.style.left=(rect.left+Math.random()*40)+"px"
-h.style.top=rect.top+"px"
-
-document.body.appendChild(h)
-
-setTimeout(()=>h.remove(),1000)
-
-}
+heartEffect(e)
 
 let name=document.getElementById("name").value
 let detail=document.getElementById("detail").value
@@ -475,25 +467,45 @@ name,detail,priority
 
 }
 
-window.togglePopup=function(force){
+function heartEffect(e){
 
-let popup=document.getElementById("popup")
+let rect=e.target.getBoundingClientRect()
 
-if(force===false){
-popup.classList.remove("active")
-return
+for(let i=0;i<6;i++){
+
+let h=document.createElement("div")
+h.className="heart"
+h.innerHTML="❤️"
+
+h.style.left=(rect.left+Math.random()*40)+"px"
+h.style.top=rect.top+"px"
+
+document.body.appendChild(h)
+
+setTimeout(()=>h.remove(),1000)
+
 }
 
-popup.classList.toggle("active")
+}
+
+window.openPopup=function(){
+
+document.getElementById("popup").classList.add("active")
 
 }
 
-/* DRAG CLOSE */
+function closePopup(){
 
-let popup=document.getElementById("popup")
+document.getElementById("popup").classList.remove("active")
+
+}
+
+/* DRAG */
+
+const popup=document.getElementById("popup")
 
 let startY=0
-let currentY=0
+let moveY=0
 let dragging=false
 
 popup.addEventListener("touchstart",e=>{
@@ -508,11 +520,11 @@ popup.addEventListener("touchmove",e=>{
 
 if(!dragging)return
 
-currentY=e.touches[0].clientY-startY
+moveY=e.touches[0].clientY-startY
 
-if(currentY>0){
+if(moveY>0){
 
-popup.style.transform=`translateY(${currentY}px)`
+popup.style.transform=`translateY(${moveY}px)`
 
 }
 
@@ -524,9 +536,9 @@ dragging=false
 
 popup.style.transition="transform .35s cubic-bezier(.22,1,.36,1)"
 
-if(currentY>120){
+if(moveY>120){
 
-popup.classList.remove("active")
+closePopup()
 
 }else{
 
@@ -534,7 +546,7 @@ popup.style.transform=""
 
 }
 
-currentY=0
+moveY=0
 
 })
 
