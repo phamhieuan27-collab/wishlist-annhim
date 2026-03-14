@@ -2,9 +2,13 @@
 
 <html lang="vi">
 <head>
+
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>Wishlist</title>
+
+<title>Wishlist của Nhím</title>
+
+<link rel="apple-touch-icon" href="icon.png">
 
 <style>
 
@@ -18,6 +22,7 @@ body{
 margin:0;
 background:#f3eee7;
 color:#4a4036;
+padding-top:env(safe-area-inset-top);
 }
 
 /* HEADER */
@@ -25,23 +30,15 @@ color:#4a4036;
 .header{
 background:linear-gradient(135deg,#e8dccb,#d6c2a5);
 padding:20px;
+padding-top:calc(env(safe-area-inset-top) + 20px);
 text-align:center;
 border-bottom-left-radius:28px;
 border-bottom-right-radius:28px;
-position:relative;
 }
 
 .header h1{
 margin:0;
 font-size:26px;
-}
-
-.back{
-position:absolute;
-left:16px;
-top:22px;
-cursor:pointer;
-display:none;
 }
 
 /* BUTTON */
@@ -53,28 +50,6 @@ text-align:center;
 font-weight:600;
 border-bottom:1px solid #eee;
 cursor:pointer;
-display:none;
-}
-
-/* USER */
-
-.users{
-padding:30px;
-display:flex;
-flex-direction:column;
-gap:16px;
-max-width:420px;
-margin:auto;
-}
-
-.user-btn{
-padding:18px;
-background:white;
-border:none;
-border-radius:16px;
-font-size:18px;
-cursor:pointer;
-box-shadow:0 6px 20px rgba(0,0,0,.08);
 }
 
 /* FORM */
@@ -83,7 +58,6 @@ box-shadow:0 6px 20px rgba(0,0,0,.08);
 padding:20px;
 max-width:520px;
 margin:auto;
-display:none;
 }
 
 .card{
@@ -93,12 +67,14 @@ border-radius:16px;
 box-shadow:0 8px 25px rgba(0,0,0,0.06);
 }
 
-input,textarea,select{
+input,select,textarea{
 width:100%;
 padding:12px;
+margin-top:6px;
 margin-bottom:14px;
 border-radius:10px;
 border:1px solid #ddd;
+font-size:15px;
 }
 
 button{
@@ -111,30 +87,21 @@ font-size:16px;
 cursor:pointer;
 }
 
-/* IMAGE PREVIEW */
+/* OVERLAY */
 
-.preview{
-display:none;
-position:relative;
-margin-bottom:10px;
+.overlay{
+position:fixed;
+inset:0;
+background:rgba(0,0,0,0.2);
+backdrop-filter:blur(6px);
+opacity:0;
+pointer-events:none;
+transition:.3s;
 }
 
-.preview img{
-width:100%;
-border-radius:10px;
-}
-
-.remove-img{
-position:absolute;
-right:10px;
-top:10px;
-background:#0008;
-color:white;
-border:none;
-border-radius:50%;
-width:28px;
-height:28px;
-cursor:pointer;
+.overlay.active{
+opacity:1;
+pointer-events:auto;
 }
 
 /* POPUP */
@@ -150,19 +117,31 @@ border-top-left-radius:24px;
 border-top-right-radius:24px;
 box-shadow:0 -10px 30px rgba(0,0,0,0.2);
 transform:translateY(100%);
-transition:.35s;
+transition:transform .35s cubic-bezier(.22,1,.36,1);
+will-change:transform;
 }
 
 .popup.active{
 transform:translateY(0);
 }
 
+/* DRAG BAR */
+
 .drag{
-width:40px;
+width:36px;
 height:4px;
 background:#ddd;
 border-radius:10px;
-margin:10px auto;
+margin:8px auto;
+}
+
+/* HEADER */
+
+.popup-header{
+text-align:center;
+padding:10px;
+font-weight:600;
+border-bottom:1px solid #eee;
 }
 
 /* TABS */
@@ -189,42 +168,84 @@ font-weight:600;
 .list{
 overflow:auto;
 height:100%;
+padding-bottom:60px;
 }
+
+/* ITEM */
 
 .item{
 display:flex;
+align-items:center;
 gap:12px;
 padding:14px 20px;
 border-bottom:1px solid #eee;
-background:white;
 position:relative;
+opacity:0;
+transform:translateY(20px);
+animation:itemIn .35s forwards;
+}
+
+@keyframes itemIn{
+to{
+opacity:1;
+transform:translateY(0);
+}
 }
 
 .item img{
 width:56px;
 height:56px;
-border-radius:10px;
 object-fit:cover;
+border-radius:10px;
 }
 
 .item-content{
 flex:1;
 }
 
+.item-name{
+font-weight:600;
+}
+
+.item-detail{
+opacity:.7;
+font-size:14px;
+}
+
+.item-priority{
+font-size:14px;
+margin-top:2px;
+}
+
 /* DELETE */
 
 .delete{
 position:absolute;
-right:-80px;
-top:0;
-bottom:0;
-width:80px;
-background:#ff3b30;
-color:white;
-display:flex;
-align-items:center;
-justify-content:center;
-font-weight:600;
+right:4px;
+top:50%;
+transform:translateY(-50%);
+background:none;
+border:none;
+font-size:18px;
+display:none;
+cursor:pointer;
+}
+
+.item.active .delete{
+display:block;
+}
+
+/* BREAK */
+
+.item.break{
+animation:break .35s forwards;
+}
+
+@keyframes break{
+to{
+opacity:0;
+transform:scale(.7) rotate(6deg);
+}
 }
 
 /* HEART */
@@ -271,37 +292,27 @@ cursor:pointer;
 <body>
 
 <div class="header">
-
-<div class="back" id="backBtn">← Back</div>
-
-<h1 id="title">Wishlist</h1>
-
+<h1>Wishlist của Nhím</h1>
+<div>Mọi điều em muốn, anh sẽ nhớ 🤍</div>
 </div>
 
-<div class="wishlist-btn" id="wishlistBtn" onclick="togglePopup()">
-Danh sách mong muốn ❤️
+<div class="wishlist-btn" onclick="togglePopup()">
+Danh sách mong muốn ❤️ (<span id="count">0</span>)
 </div>
 
-<div class="users" id="users">
-
-<button class="user-btn" onclick="selectUser('nhim')">Nhím</button> <button class="user-btn" onclick="selectUser('an')">An</button>
-
-</div>
-
-<div class="container" id="form">
+<div class="container">
 
 <div class="card">
 
-<input id="name" placeholder="Tên món quà">
+<label>Tên món quà</label> <input id="name">
 
-<textarea id="detail" placeholder="Chi tiết"></textarea>
+<label>Cụ thể</label>
 
-<input type="file" id="imageInput">
+<textarea id="detail"></textarea>
 
-<div class="preview" id="preview">
-<img id="previewImg">
-<button class="remove-img" onclick="removeImage()">✕</button>
-</div>
+<label>Hình ảnh</label> <input type="file" id="image">
+
+<label>Độ ưu tiên</label>
 
 <select id="priority">
 <option>🙄 Ước thôi</option>
@@ -315,15 +326,23 @@ Danh sách mong muốn ❤️
 
 </div>
 
+<div class="overlay" id="overlay"></div>
+
 <div class="popup" id="popup">
 
 <div class="drag"></div>
 
+<div class="popup-header">
+Wishlist
+</div>
+
 <div class="tabs">
+
 <div class="tab active" onclick="switchTab('all',event)">Tất cả</div>
 <div class="tab" onclick="switchTab('🥰',event)">🥰</div>
 <div class="tab" onclick="switchTab('🤭',event)">🤭</div>
 <div class="tab" onclick="switchTab('🙄',event)">🙄</div>
+
 </div>
 
 <div id="list" class="list"></div>
@@ -335,108 +354,218 @@ Danh sách mong muốn ❤️
 <button onclick="undoDelete()">Hoàn tác</button>
 </div>
 
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
-
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
-
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-storage-compat.js"></script>
-
 <script>
 
-const firebaseConfig={
-apiKey:"AIzaSyAUrHsJyOoyutwiTg9kSKxCiZX3E8U043w",
-authDomain:"nhiman.firebaseapp.com",
-databaseURL:"https://nhiman-default-rtdb.asia-southeast1.firebasedatabase.app",
-projectId:"nhiman",
-storageBucket:"nhiman.firebasestorage.app",
-messagingSenderId:"958208065341",
-appId:"1:958208065341:web:1860b555603af5fb664f54"
-}
-
-firebase.initializeApp(firebaseConfig)
-
-const db=firebase.database()
-const storage=firebase.storage()
-
-let currentUser=null
-let gifts=[]
+let gifts=JSON.parse(localStorage.getItem("wishlist"))||[]
 let currentTab="all"
-let selectedFile=null
+
+let lastDeleted=null
+let lastIndex=null
 
 const list=document.getElementById("list")
+const popup=document.getElementById("popup")
+const overlay=document.getElementById("overlay")
+const undoBar=document.getElementById("undoBar")
 
-function selectUser(user){
+/* HEART */
 
-currentUser=user
+function heartEffect(x,y){
 
-document.getElementById("users").style.display="none"
-document.getElementById("form").style.display="block"
-document.getElementById("wishlistBtn").style.display="block"
-document.getElementById("backBtn").style.display="block"
+for(let i=0;i<6;i++){
 
-listenData()
+let h=document.createElement("div")
+h.className="heart"
+h.innerHTML="❤️"
 
-}
+h.style.left=(x+Math.random()*40-20)+"px"
+h.style.top=(y+Math.random()*10)+"px"
 
-document.getElementById("backBtn").onclick=()=>{
+document.body.appendChild(h)
 
-document.getElementById("users").style.display="flex"
-document.getElementById("form").style.display="none"
-document.getElementById("wishlistBtn").style.display="none"
-document.getElementById("backBtn").style.display="none"
-
-togglePopup(false)
+setTimeout(()=>h.remove(),1000)
 
 }
 
-function listenData(){
+}
 
-db.ref("wishlist/"+currentUser).on("value",snap=>{
+/* CREATE ITEM */
 
-gifts=[]
+function createItem(g,i){
 
-snap.forEach(child=>{
+let item=document.createElement("div")
+item.className="item"
+item.style.animationDelay=i*0.04+"s"
 
-let g=child.val()
-g.id=child.key
+item.innerHTML=`
 
-gifts.push(g)
+<img src="${g.image||''}">
 
-})
+<div class="item-content">
 
-render()
+<div class="item-name">${g.name}</div>
+<div class="item-detail">${g.detail||""}</div>
+<div class="item-priority">${g.priority}</div>
 
-})
+</div>
+
+<button class="delete">✕</button>
+
+`
+
+item.onclick=()=>{
+document.querySelectorAll(".item").forEach(x=>x.classList.remove("active"))
+item.classList.add("active")
+}
+
+item.querySelector(".delete").onclick=(e)=>{
+e.stopPropagation()
+removeGift(i,item)
+}
+
+return item
 
 }
+
+/* RENDER */
 
 function render(){
 
 list.innerHTML=""
 
-gifts.filter(g=>{
-if(currentTab==="all") return true
-return g.priority.includes(currentTab)
-})
-.forEach(g=>{
+document.getElementById("count").innerText=gifts.length
 
-let item=document.createElement("div")
-item.className="item"
+gifts.forEach((g,i)=>{
 
-item.innerHTML=`
-<img src="${g.image||''}">
-<div class="item-content">
-<div><b>${g.name}</b></div>
-<div>${g.detail||""}</div>
-<div>${g.priority}</div>
-</div>
-`
+if(currentTab!=="all" && !g.priority.includes(currentTab)) return
 
-list.appendChild(item)
+list.appendChild(createItem(g,i))
 
 })
 
 }
+
+/* ADD */
+
+function addGift(e){
+
+let rect=e.target.getBoundingClientRect()
+
+heartEffect(rect.left+rect.width/2,rect.top)
+
+let name=document.getElementById("name").value
+let detail=document.getElementById("detail").value
+let priority=document.getElementById("priority").value
+let file=document.getElementById("image").files[0]
+
+if(!name)return
+
+if(file){
+
+let reader=new FileReader()
+
+reader.onload=function(ev){
+saveGift(name,detail,priority,ev.target.result)
+}
+
+reader.readAsDataURL(file)
+
+}else{
+saveGift(name,detail,priority,null)
+}
+
+}
+
+function saveGift(name,detail,priority,image){
+
+gifts.push({name,detail,priority,image})
+
+localStorage.setItem("wishlist",JSON.stringify(gifts))
+
+render()
+
+}
+
+/* DELETE */
+
+function removeGift(i,item){
+
+lastDeleted=gifts[i]
+lastIndex=i
+
+item.classList.add("break")
+
+setTimeout(()=>{
+
+gifts.splice(i,1)
+
+localStorage.setItem("wishlist",JSON.stringify(gifts))
+
+render()
+
+undoBar.style.display="block"
+
+setTimeout(()=>undoBar.style.display="none",4000)
+
+},300)
+
+}
+
+function undoDelete(){
+
+if(lastDeleted){
+
+gifts.splice(lastIndex,0,lastDeleted)
+
+localStorage.setItem("wishlist",JSON.stringify(gifts))
+
+render()
+
+undoBar.style.display="none"
+
+}
+
+}
+
+/* POPUP */
+
+function togglePopup(){
+
+popup.classList.toggle("active")
+overlay.classList.toggle("active")
+
+}
+
+/* DRAG */
+
+let startY=0
+
+popup.addEventListener("touchstart",e=>{
+startY=e.touches[0].clientY
+})
+
+popup.addEventListener("touchmove",e=>{
+
+let move=e.touches[0].clientY-startY
+
+if(move>0){
+popup.style.transform=`translateY(${move}px)`
+}
+
+})
+
+popup.addEventListener("touchend",e=>{
+
+let move=e.changedTouches[0].clientY-startY
+
+if(move>120){
+togglePopup()
+}
+
+popup.style.transform=""
+
+})
+
+overlay.onclick=togglePopup
 
 function switchTab(tab,e){
 
@@ -450,18 +579,7 @@ render()
 
 }
 
-function togglePopup(force){
-
-let popup=document.getElementById("popup")
-
-if(force===false){
-popup.classList.remove("active")
-return
-}
-
-popup.classList.toggle("active")
-
-}
+render()
 
 </script>
 
