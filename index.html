@@ -25,6 +25,8 @@ color:#4a4036;
 padding-top:env(safe-area-inset-top);
 }
 
+/* HEADER */
+
 .header{
 background:linear-gradient(135deg,#e8dccb,#d6c2a5);
 padding:20px;
@@ -39,6 +41,8 @@ margin:0;
 font-size:26px;
 }
 
+/* BUTTON */
+
 .wishlist-btn{
 background:#fff;
 padding:14px;
@@ -47,6 +51,8 @@ font-weight:600;
 border-bottom:1px solid #eee;
 cursor:pointer;
 }
+
+/* FORM */
 
 .container{
 padding:20px;
@@ -81,6 +87,8 @@ font-size:16px;
 cursor:pointer;
 }
 
+/* OVERLAY */
+
 .overlay{
 position:fixed;
 inset:0;
@@ -96,6 +104,8 @@ opacity:1;
 pointer-events:auto;
 }
 
+/* POPUP */
+
 .popup{
 position:fixed;
 bottom:0;
@@ -108,11 +118,14 @@ border-top-right-radius:24px;
 box-shadow:0 -10px 30px rgba(0,0,0,0.2);
 transform:translateY(100%);
 transition:transform .35s cubic-bezier(.22,1,.36,1);
+will-change:transform;
 }
 
 .popup.active{
 transform:translateY(0);
 }
+
+/* DRAG BAR */
 
 .drag{
 width:36px;
@@ -122,12 +135,16 @@ border-radius:10px;
 margin:8px auto;
 }
 
+/* HEADER */
+
 .popup-header{
 text-align:center;
 padding:10px;
 font-weight:600;
 border-bottom:1px solid #eee;
 }
+
+/* TABS */
 
 .tabs{
 display:flex;
@@ -146,11 +163,15 @@ background:#f5efe6;
 font-weight:600;
 }
 
+/* LIST */
+
 .list{
 overflow:auto;
 height:100%;
 padding-bottom:60px;
 }
+
+/* ITEM */
 
 .item{
 display:flex;
@@ -159,6 +180,16 @@ gap:12px;
 padding:14px 20px;
 border-bottom:1px solid #eee;
 position:relative;
+opacity:0;
+transform:translateY(20px);
+animation:itemIn .35s forwards;
+}
+
+@keyframes itemIn{
+to{
+opacity:1;
+transform:translateY(0);
+}
 }
 
 .item img{
@@ -181,11 +212,12 @@ opacity:.7;
 font-size:14px;
 }
 
-.item a{
-font-size:13px;
-color:#a67c52;
-text-decoration:none;
+.item-priority{
+font-size:14px;
+margin-top:2px;
 }
+
+/* DELETE */
 
 .delete{
 position:absolute;
@@ -202,6 +234,36 @@ cursor:pointer;
 .item.active .delete{
 display:block;
 }
+
+/* BREAK */
+
+.item.break{
+animation:break .35s forwards;
+}
+
+@keyframes break{
+to{
+opacity:0;
+transform:scale(.7) rotate(6deg);
+}
+}
+
+/* HEART */
+
+.heart{
+position:fixed;
+font-size:20px;
+pointer-events:none;
+animation:heartFly 1s ease forwards;
+}
+
+@keyframes heartFly{
+0%{transform:translateY(0) scale(.4);opacity:0;}
+20%{opacity:1;}
+100%{transform:translateY(-120px) scale(1.6);opacity:0;}
+}
+
+/* UNDO */
 
 .undo{
 position:fixed;
@@ -231,7 +293,7 @@ cursor:pointer;
 
 <div class="header">
 <h1>Wishlist của Nhím</h1>
-<div>Mọi điều em muốn, anh sẽ nhớ 🤍</div>
+<div id="loveLine">Mọi điều v muốn, c sẽ nhớ 🤍</div>
 </div>
 
 <div class="wishlist-btn" onclick="togglePopup()">
@@ -248,12 +310,13 @@ Danh sách mong muốn ❤️ (<span id="count">0</span>)
 
 <textarea id="detail"></textarea>
 
-<label>Link sản phẩm</label> <input id="link" placeholder="Shopee / TikTok / Web...">
-
 <label>Hình ảnh</label> <input type="file" id="image">
 
-<label>Độ ưu tiên</label> <select id="priority">
+<label>Link sản phẩm</label> <input id="link" placeholder="Shopee / TikTok / Web...">
 
+<label>Độ ưu tiên</label>
+
+<select id="priority">
 <option>🙄 Ước thôi</option>
 <option>🤭 Thích nha</option>
 <option>🥰 Muốn lắm</option>
@@ -306,13 +369,40 @@ const popup=document.getElementById("popup")
 const overlay=document.getElementById("overlay")
 const undoBar=document.getElementById("undoBar")
 
+/* HEART */
+
+function heartEffect(x,y){
+
+for(let i=0;i<6;i++){
+
+let h=document.createElement("div")
+h.className="heart"
+h.innerHTML="❤️"
+
+h.style.left=(x+Math.random()*40-20)+"px"
+h.style.top=(y+Math.random()*10)+"px"
+
+document.body.appendChild(h)
+
+setTimeout(()=>h.remove(),1000)
+
+}
+
+}
+
+/* CREATE ITEM */
+
 function createItem(g,i){
 
 let item=document.createElement("div")
 item.className="item"
+item.style.animationDelay=i*0.04+"s"
 
 let imgHTML = g.image ? `<img src="${g.image}">` : ""
-let linkHTML = g.link ? `<div class="item-detail"><a href="${g.link}" target="_blank">Xem sản phẩm</a></div>` : ""
+
+let linkHTML = g.link 
+? `<div class="item-detail"><a href="${g.link}" target="_blank">Xem sản phẩm</a></div>` 
+: ""
 
 item.innerHTML=`
 
@@ -344,10 +434,33 @@ removeGift(i,item)
 return item
 
 }
+/* LOVE LINE RANDOM */
+
+const loveLines = [
+
+"Mọi điều v muốn, c sẽ nhớ 🤍",
+
+"Nhím hôm nay có muốn gì không?",
+
+"Wishlist của v vẫn đang được cập nhật ✨",
+
+"C đang ghi nhớ những điều v thích.",
+
+"Những điều v thích… c đều lưu lại.",
+
+"Thêm vào đi, c sẽ xem 😌"
+
+]
+
+const randomLine = loveLines[Math.floor(Math.random()*loveLines.length)]
+
+document.getElementById("loveLine").innerText = randomLine
+/* RENDER */
 
 function render(){
 
 list.innerHTML=""
+
 document.getElementById("count").innerText=gifts.length
 
 gifts.forEach((g,i)=>{
@@ -360,7 +473,13 @@ list.appendChild(createItem(g,i))
 
 }
 
+/* ADD */
+
 function addGift(e){
+
+let rect=e.target.getBoundingClientRect()
+
+heartEffect(rect.left+rect.width/2,rect.top)
 
 let name=document.getElementById("name").value
 let detail=document.getElementById("detail").value
@@ -402,10 +521,16 @@ document.getElementById("priority").selectedIndex=0
 
 }
 
+/* DELETE */
+
 function removeGift(i,item){
 
 lastDeleted=gifts[i]
 lastIndex=i
+
+item.classList.add("break")
+
+setTimeout(()=>{
 
 gifts.splice(i,1)
 
@@ -416,6 +541,8 @@ render()
 undoBar.style.display="block"
 
 setTimeout(()=>undoBar.style.display="none",4000)
+
+},300)
 
 }
 
@@ -435,12 +562,44 @@ undoBar.style.display="none"
 
 }
 
+/* POPUP */
+
 function togglePopup(){
 
 popup.classList.toggle("active")
 overlay.classList.toggle("active")
 
 }
+
+/* DRAG */
+
+let startY=0
+
+popup.addEventListener("touchstart",e=>{
+startY=e.touches[0].clientY
+})
+
+popup.addEventListener("touchmove",e=>{
+
+let move=e.touches[0].clientY-startY
+
+if(move>0){
+popup.style.transform=`translateY(${move}px)`
+}
+
+})
+
+popup.addEventListener("touchend",e=>{
+
+let move=e.changedTouches[0].clientY-startY
+
+if(move>120){
+togglePopup()
+}
+
+popup.style.transform=""
+
+})
 
 overlay.onclick=togglePopup
 
