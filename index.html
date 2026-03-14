@@ -1,5 +1,4 @@
 <!DOCTYPE html>
-
 <html lang="vi">
 <head>
 
@@ -85,6 +84,19 @@ border-radius:12px;
 background:#cbb79a;
 font-size:16px;
 cursor:pointer;
+}
+
+/* PREVIEW */
+
+.preview{
+width:100%;
+margin-bottom:12px;
+display:none;
+}
+
+.preview img{
+width:100%;
+border-radius:10px;
 }
 
 /* OVERLAY */
@@ -293,7 +305,7 @@ cursor:pointer;
 
 <div class="header">
 <h1>Wishlist của Nhím</h1>
-<div id="loveLine">Mọi điều v muốn, c sẽ nhớ 🤍</div>
+<div>Mọi điều v muốn, c sẽ nhớ 🤍</div>
 </div>
 
 <div class="wishlist-btn" onclick="togglePopup()">
@@ -304,15 +316,18 @@ Danh sách mong muốn ❤️ (<span id="count">0</span>)
 
 <div class="card">
 
-<label>Tên món quà</label> <input id="name">
+<label>Tên món quà</label> 
+<input id="name">
 
 <label>Cụ thể</label>
-
 <textarea id="detail"></textarea>
 
-<label>Hình ảnh</label> <input type="file" id="image">
+<label>Hình ảnh</label> 
+<input type="file" id="image">
 
-<label>Link sản phẩm</label> <input id="link" placeholder="Shopee / TikTok / Web...">
+<div class="preview" id="preview">
+<img id="previewImg">
+</div>
 
 <label>Độ ưu tiên</label>
 
@@ -369,6 +384,26 @@ const popup=document.getElementById("popup")
 const overlay=document.getElementById("overlay")
 const undoBar=document.getElementById("undoBar")
 
+/* IMAGE PREVIEW */
+
+document.getElementById("image").addEventListener("change",function(){
+
+let file=this.files[0]
+if(!file)return
+
+let reader=new FileReader()
+
+reader.onload=function(e){
+
+document.getElementById("previewImg").src=e.target.result
+document.getElementById("preview").style.display="block"
+
+}
+
+reader.readAsDataURL(file)
+
+})
+
 /* HEART */
 
 function heartEffect(x,y){
@@ -398,27 +433,14 @@ let item=document.createElement("div")
 item.className="item"
 item.style.animationDelay=i*0.04+"s"
 
-let imgHTML = g.image ? `<img src="${g.image}">` : ""
-
-let linkHTML = g.link 
-? `<div class="item-detail"><a href="${g.link}" target="_blank">Xem sản phẩm</a></div>` 
-: ""
-
 item.innerHTML=`
-
-${imgHTML}
-
+${g.image?`<img src="${g.image}">`:""}
 <div class="item-content">
-
 <div class="item-name">${g.name}</div>
 <div class="item-detail">${g.detail||""}</div>
-${linkHTML}
 <div class="item-priority">${g.priority}</div>
-
 </div>
-
 <button class="delete">✕</button>
-
 `
 
 item.onclick=()=>{
@@ -428,33 +450,13 @@ item.classList.add("active")
 
 item.querySelector(".delete").onclick=(e)=>{
 e.stopPropagation()
-removeGift(i,item)
+removeGift(g.id,item)
 }
 
 return item
 
 }
-/* LOVE LINE RANDOM */
 
-const loveLines = [
-
-"Mọi điều v muốn, c sẽ nhớ 🤍",
-
-"Nhím hôm nay có muốn gì không?",
-
-"Wishlist của v vẫn đang được cập nhật ✨",
-
-"C đang ghi nhớ những điều v thích.",
-
-"Những điều v thích… c đều lưu lại.",
-
-"Thêm vào đi, c sẽ xem 😌"
-
-]
-
-const randomLine = loveLines[Math.floor(Math.random()*loveLines.length)]
-
-document.getElementById("loveLine").innerText = randomLine
 /* RENDER */
 
 function render(){
@@ -478,61 +480,96 @@ list.appendChild(createItem(g,i))
 function addGift(e){
 
 let rect=e.target.getBoundingClientRect()
-
 heartEffect(rect.left+rect.width/2,rect.top)
 
 let name=document.getElementById("name").value
 let detail=document.getElementById("detail").value
 let priority=document.getElementById("priority").value
-let link=document.getElementById("link").value
 let file=document.getElementById("image").files[0]
 
 if(!name)return
 
 if(file){
 
+resizeImage(file,800,function(img){
+
+saveGift(name,detail,priority,img)
+
+})
+
+}else{
+
+saveGift(name,detail,priority,null)
+
+}
+
+}
+
+/* RESIZE IMAGE */
+
+function resizeImage(file,max,callback){
+
+let img=new Image()
 let reader=new FileReader()
 
-reader.onload=function(ev){
-saveGift(name,detail,priority,ev.target.result,link)
+reader.onload=function(e){
+
+img.src=e.target.result
+
+}
+
+img.onload=function(){
+
+let canvas=document.createElement("canvas")
+let scale=max/img.width
+
+canvas.width=max
+canvas.height=img.height*scale
+
+let ctx=canvas.getContext("2d")
+ctx.drawImage(img,0,0,canvas.width,canvas.height)
+
+callback(canvas.toDataURL("image/jpeg",0.8))
+
 }
 
 reader.readAsDataURL(file)
 
-}else{
-saveGift(name,detail,priority,null,link)
 }
 
-}
+/* SAVE */
 
-function saveGift(name,detail,priority,image,link){
+function saveGift(name,detail,priority,image){
 
-gifts.push({name,detail,priority,image,link})
+let id=Date.now()
+
+gifts.push({id,name,detail,priority,image})
 
 localStorage.setItem("wishlist",JSON.stringify(gifts))
-
-render()
 
 document.getElementById("name").value=""
 document.getElementById("detail").value=""
 document.getElementById("image").value=""
-document.getElementById("link").value=""
-document.getElementById("priority").selectedIndex=0
+document.getElementById("preview").style.display="none"
+
+render()
 
 }
 
 /* DELETE */
 
-function removeGift(i,item){
+function removeGift(id,item){
 
-lastDeleted=gifts[i]
-lastIndex=i
+let index=gifts.findIndex(g=>g.id===id)
+
+lastDeleted=gifts[index]
+lastIndex=index
 
 item.classList.add("break")
 
 setTimeout(()=>{
 
-gifts.splice(i,1)
+gifts.splice(index,1)
 
 localStorage.setItem("wishlist",JSON.stringify(gifts))
 
