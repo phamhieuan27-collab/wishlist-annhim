@@ -371,7 +371,24 @@ Wishlist
 <button onclick="undoDelete()">Hoàn tác</button>
 </div>
 
-<script>
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getFirestore, collection, addDoc, onSnapshot, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyCJPXV8hucwbSYgtdAlxeD5ykTr_QHGTik",
+  authDomain: "annhim.firebaseapp.com",
+  projectId: "annhim",
+  storageBucket: "annhim.firebasestorage.app",
+  messagingSenderId: "838923299040",
+  appId: "1:838923299040:web:6290d516cb632ea0624885"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+const roomId = "annhim";
+const giftsRef = collection(db, "wishlist", roomId, "items");
 
 let gifts=JSON.parse(localStorage.getItem("wishlist"))||[]
 let currentTab="all"
@@ -538,21 +555,31 @@ reader.readAsDataURL(file)
 }
 
 /* SAVE */
+  
+async function saveGift(name,detail,priority,image){
 
-function saveGift(name,detail,priority,image){
+try{
 
-let id=Date.now()
+await addDoc(giftsRef,{
+name,
+detail,
+priority,
+image,
+createdAt: Date.now()
+})
 
-gifts.push({id,name,detail,priority,image})
-
-localStorage.setItem("wishlist",JSON.stringify(gifts))
+console.log("✅ Đã add thành công")
 
 document.getElementById("name").value=""
 document.getElementById("detail").value=""
 document.getElementById("image").value=""
 document.getElementById("preview").style.display="none"
 
-render()
+}catch(err){
+
+console.error("❌ Lỗi Firebase:",err)
+
+}
 
 }
 
@@ -651,6 +678,17 @@ e.target.classList.add("active")
 render()
 
 }
+onSnapshot(giftsRef,(snapshot)=>{
+
+gifts=[]
+
+snapshot.forEach(doc=>{
+gifts.push({id:doc.id,...doc.data()})
+})
+
+render()
+
+})
 
 render()
 
