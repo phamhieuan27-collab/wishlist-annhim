@@ -559,23 +559,13 @@ async function saveGift(name,detail,priority,image){
 
   try{
 
-    let docRef = await addDoc(giftsRef,{
+    await addDoc(giftsRef,{
       name,
       detail,
       priority,
       image,
       createdAt: Date.now()
     })
-
-    gifts.push({
-      id: docRef.id,
-      name,
-      detail,
-      priority,
-      image
-    })
-
-    render()
 
     console.log("OK")
 
@@ -585,9 +575,7 @@ async function saveGift(name,detail,priority,image){
     document.getElementById("preview").style.display="none"
 
   }catch(err){
-
     console.error("Firebase lỗi:",err)
-
   }
 
 }
