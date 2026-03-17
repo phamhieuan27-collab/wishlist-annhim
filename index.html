@@ -510,13 +510,13 @@ if(file){
 
 resizeImage(file,800,function(img){
 
-await saveGift(name,detail,priority,img)
+  saveGift(name,detail,priority,img)
 
 })
 
 }else{
 
-saveGift(name,detail,priority,null)
+await saveGift(name,detail,priority,null)
 
 }
 
