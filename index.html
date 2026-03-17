@@ -555,21 +555,21 @@ reader.readAsDataURL(file)
 }
 
 /* SAVE */
+  
+async function saveGift(name,detail,priority,image){
 
-function saveGift(name,detail,priority,image){
-
-let id=Date.now()
-
-gifts.push({id,name,detail,priority,image})
-
-localStorage.setItem("wishlist",JSON.stringify(gifts))
+await addDoc(giftsRef,{
+name,
+detail,
+priority,
+image,
+createdAt: Date.now()
+})
 
 document.getElementById("name").value=""
 document.getElementById("detail").value=""
 document.getElementById("image").value=""
 document.getElementById("preview").style.display="none"
-
-render()
 
 }
 
