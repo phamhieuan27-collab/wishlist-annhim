@@ -494,7 +494,7 @@ list.appendChild(createItem(g,i))
 
 /* ADD */
 
-function addGift(e){
+async function addGift(e){
 
 let rect=e.target.getBoundingClientRect()
 heartEffect(rect.left+rect.width/2,rect.top)
@@ -510,7 +510,7 @@ if(file){
 
 resizeImage(file,800,function(img){
 
-saveGift(name,detail,priority,img)
+await saveGift(name,detail,priority,img)
 
 })
 
