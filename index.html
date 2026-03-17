@@ -668,6 +668,17 @@ e.target.classList.add("active")
 render()
 
 }
+onSnapshot(giftsRef,(snapshot)=>{
+
+gifts=[]
+
+snapshot.forEach(doc=>{
+gifts.push({id:doc.id,...doc.data()})
+})
+
+render()
+
+})
 
 render()
 
