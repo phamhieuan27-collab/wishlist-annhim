@@ -586,7 +586,7 @@ async function removeGift(id,item){
 
 let index=gifts.findIndex(g=>g.id===id)
 
-lastDeleted = gifts[index]
+lastDeleted = JSON.parse(JSON.stringify(gifts[index]))
 lastIndex = index
 
 item.classList.add("break")
@@ -612,13 +612,10 @@ if(!lastDeleted) return
 
 try{
 
-  await addDoc(giftsRef,{
-    name: lastDeleted.name,
-    detail: lastDeleted.detail,
-    priority: lastDeleted.priority,
-    image: lastDeleted.image,
-    createdAt: Date.now()
-  })
+  await setDoc(
+    doc(db,"wishlist","annhim","items", lastDeleted.id),
+    lastDeleted
+  )
 
   undoBar.style.display="none"
   lastDeleted=null
