@@ -558,6 +558,8 @@ reader.readAsDataURL(file)
   
 async function saveGift(name,detail,priority,image){
 
+try{
+
 await addDoc(giftsRef,{
 name,
 detail,
@@ -566,10 +568,18 @@ image,
 createdAt: Date.now()
 })
 
+console.log("✅ Đã add thành công")
+
 document.getElementById("name").value=""
 document.getElementById("detail").value=""
 document.getElementById("image").value=""
 document.getElementById("preview").style.display="none"
+
+}catch(err){
+
+console.error("❌ Lỗi Firebase:",err)
+
+}
 
 }
 
