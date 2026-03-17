@@ -613,9 +613,11 @@ if(!lastDeleted) return
 
 try{
 
+  let {id, ...data} = lastDeleted   // 👈 TÁCH ID RA
+
   await setDoc(
-    doc(db,"wishlist","annhim","items", lastDeleted.id),
-    lastDeleted
+    doc(db,"wishlist","annhim","items", id),
+    data   // 👈 KHÔNG gửi id vào data
   )
 
   undoBar.style.display="none"
@@ -624,9 +626,9 @@ try{
 }catch(err){
   console.error("Undo lỗi:",err)
 }
-
-}
 console.log("UNDO:", lastDeleted)
+}
+
 /* POPUP */
 
 function togglePopup(){
