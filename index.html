@@ -383,7 +383,7 @@ const firebaseConfig = {
   messagingSenderId: "838923299040",
   appId: "1:838923299040:web:6290d516cb632ea0624885"
 };
-
+window.switchTab = switchTab
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
@@ -644,7 +644,7 @@ popup.classList.toggle("active")
 overlay.classList.toggle("active")
 
 }
-
+window.togglePopup = togglePopup
 /* DRAG */
 
 let startY=0
