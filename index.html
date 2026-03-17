@@ -508,17 +508,15 @@ if(!name)return
 
 if(file){
 
-resizeImage(file,800,function(img){
+resizeImage(file,800,async function(img){
 
-  saveGift(name,detail,priority,img)
+  await saveGift(name,detail,priority,img)
 
 })
 
 }else{
 
 await saveGift(name,detail,priority,null)
-
-}
 
 }
 
