@@ -558,28 +558,38 @@ reader.readAsDataURL(file)
   
 async function saveGift(name,detail,priority,image){
 
-try{
+  try{
 
-await addDoc(giftsRef,{
-name,
-detail,
-priority,
-image,
-createdAt: Date.now()
-})
+    let docRef = await addDoc(giftsRef,{
+      name,
+      detail,
+      priority,
+      image,
+      createdAt: Date.now()
+    })
 
-console.log("✅ Đã add thành công")
+    gifts.push({
+      id: docRef.id,
+      name,
+      detail,
+      priority,
+      image
+    })
 
-document.getElementById("name").value=""
-document.getElementById("detail").value=""
-document.getElementById("image").value=""
-document.getElementById("preview").style.display="none"
+    render()
 
-}catch(err){
+    console.log("OK")
 
-console.error("❌ Lỗi Firebase:",err)
+    document.getElementById("name").value=""
+    document.getElementById("detail").value=""
+    document.getElementById("image").value=""
+    document.getElementById("preview").style.display="none"
 
-}
+  }catch(err){
+
+    console.error("Firebase lỗi:",err)
+
+  }
 
 }
 
