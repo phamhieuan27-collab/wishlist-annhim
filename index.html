@@ -598,10 +598,10 @@ setTimeout(async ()=>{
 
   undoBar.style.display="block"
 
-  setTimeout(()=>{
-    undoBar.style.display="none"
-    lastDeleted=null
-  },5000)
+setTimeout(()=>{
+  undoBar.style.display="none"
+  // ❌ KHÔNG reset lastDeleted ở đây
+},5000)
 
 },300)
 
@@ -613,20 +613,25 @@ if(!lastDeleted) return
 
 try{
 
-  let {id, ...data} = lastDeleted   // 👈 TÁCH ID RA
+  let {id, ...data} = lastDeleted
 
   await setDoc(
     doc(db,"wishlist","annhim","items", id),
-    data   // 👈 KHÔNG gửi id vào data
+    data
   )
 
-  undoBar.style.display="none"
-  lastDeleted=null
+  console.log("UNDO OK")
+
+  // ❌ KHÔNG reset ngay
+  setTimeout(()=>{
+    undoBar.style.display="none"
+    lastDeleted=null
+  },500)
 
 }catch(err){
   console.error("Undo lỗi:",err)
 }
-console.log("UNDO:", lastDeleted)
+
 }
 
 /* POPUP */
