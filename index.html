@@ -594,43 +594,49 @@ async function saveGift(name,detail,priority,image){
 
 /* DELETE */
 
-function removeGift(id,item){
+async function removeGift(id,item){
 
 let index=gifts.findIndex(g=>g.id===id)
 
-lastDeleted=gifts[index]
-lastIndex=index
+lastDeleted = gifts[index]
+lastIndex = index
 
 item.classList.add("break")
 
-setTimeout(()=>{
+setTimeout(async ()=>{
 
-gifts.splice(index,1)
+  await deleteDoc(doc(db,"wishlist","annhim","items",id))
 
-localStorage.setItem("wishlist",JSON.stringify(gifts))
+  undoBar.style.display="block"
 
-render()
-
-undoBar.style.display="block"
-
-setTimeout(()=>undoBar.style.display="none",4000)
+  setTimeout(()=>{
+    undoBar.style.display="none"
+    lastDeleted=null
+  },5000)
 
 },300)
 
 }
 
-function undoDelete(){
+async function undoDelete(){
 
-if(lastDeleted){
+if(!lastDeleted) return
 
-gifts.splice(lastIndex,0,lastDeleted)
+try{
 
-localStorage.setItem("wishlist",JSON.stringify(gifts))
+  await addDoc(giftsRef,{
+    name: lastDeleted.name,
+    detail: lastDeleted.detail,
+    priority: lastDeleted.priority,
+    image: lastDeleted.image,
+    createdAt: Date.now()
+  })
 
-render()
+  undoBar.style.display="none"
+  lastDeleted=null
 
-undoBar.style.display="none"
-
+}catch(err){
+  console.error("Undo lỗi:",err)
 }
 
 }
