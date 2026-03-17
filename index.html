@@ -389,7 +389,7 @@ const db = getFirestore(app);
 const roomId = "annhim";
 const giftsRef = collection(db, "wishlist", roomId, "items");
 
-let gifts=JSON.parse(localStorage.getItem("wishlist"))||[]
+let gifts=[]
 let currentTab="all"
 
 let lastDeleted=null
